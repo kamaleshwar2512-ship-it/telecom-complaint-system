@@ -1,0 +1,50 @@
+/* Small additions on top of Bootstrap - most of the UI relies on Bootstrap utilities/components directly. */
+
+body {
+    background-color: #f4f6f9;
+}
+
+.card {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.stat-card .display-6 {
+    font-weight: 600;
+}
+
+.timeline {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 0;
+}
+
+.timeline li {
+    border-left: 3px solid #dee2e6;
+    padding: 0.25rem 0 0.75rem 1rem;
+    margin-left: 0.5rem;
+    position: relative;
+}
+
+.timeline li::before {
+    content: "";
+    position: absolute;
+    left: -7px;
+    top: 0.4rem;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #6c757d;
+}
+
+.timeline li:last-child {
+    border-left-color: transparent;
+}
+
+.sla-countdown {
+    font-weight: 600;
+}
+
+footer {
+    color: #6c757d;
+    font-size: 0.875rem;
+}

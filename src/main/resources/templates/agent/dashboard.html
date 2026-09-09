@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>My Queue - Telecom Complaint Tracker</title>
+    <th:block th:replace="~{fragments/common :: head-imports}"></th:block>
+</head>
+<body>
+<nav th:replace="~{fragments/common :: navbar}"></nav>
+<div th:replace="~{fragments/common :: alerts}"></div>
+
+<div class="container">
+    <h2 class="mb-4">My Complaint Queue</h2>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4 col-6">
+            <div class="card stat-card text-center p-3">
+                <div class="text-muted small">Assigned</div>
+                <div class="display-6" th:text="${#lists.size(complaints)}">0</div>
+            </div>
+        </div>
+        <div class="col-md-4 col-6">
+            <div class="card stat-card text-center p-3">
+                <div class="text-muted small">Open / In Progress</div>
+                <div class="display-6 text-primary" th:text="${openCount}">0</div>
+            </div>
+        </div>
+        <div class="col-md-4 col-6">
+            <div class="card stat-card text-center p-3">
+                <div class="text-muted small">Escalated</div>
+                <div class="display-6 text-danger" th:text="${escalatedCount}">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Customer</th>
+                    <th>Category</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>SLA Remaining</th>
+                    <th>Urgency</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(complaints)}">
+                    <td colspan="8" class="text-center text-muted py-4">No complaints assigned to you yet.</td>
+                </tr>
+                <tr th:each="c : ${complaints}">
+                    <td th:text="'#' + ${c.id}">#1</td>
+                    <td th:text="${c.customer.name}">customer</td>
+                    <td th:text="${c.category}">CATEGORY</td>
+                    <td th:text="${c.priority}">PRIORITY</td>
+                    <td><span class="badge bg-secondary" th:text="${c.status}">STATUS</span></td>
+                    <td th:text="${@slaDisplayService.remainingTime(c)}">remaining</td>
+                    <td><span class="badge" th:classappend="${@slaDisplayService.badgeClass(c)}"
+                              th:text="${@slaDisplayService.urgencyLabel(c)}">urgency</span></td>
+                    <td><a th:href="@{'/agent/complaints/' + ${c.id}}" class="btn btn-sm btn-outline-primary">Open</a></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<th:block th:replace="~{fragments/common :: scripts}"></th:block>
+</body>
+</html>

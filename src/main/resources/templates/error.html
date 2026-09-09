@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Error - Telecom Complaint Tracker</title>
+    <th:block th:replace="~{fragments/common :: head-imports}"></th:block>
+</head>
+<body>
+<div class="container">
+    <div class="row justify-content-center align-items-center" style="min-height: 90vh;">
+        <div class="col-md-6 text-center">
+            <h1 class="display-4" th:text="${status} ?: '500'">500</h1>
+            <p class="lead" th:text="${message} ?: 'Something went wrong.'">Something went wrong.</p>
+            <a href="/" class="btn btn-primary mt-3">Back to home</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

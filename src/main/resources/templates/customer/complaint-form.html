@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Raise a Complaint - Telecom Complaint Tracker</title>
+    <th:block th:replace="~{fragments/common :: head-imports}"></th:block>
+</head>
+<body>
+<nav th:replace="~{fragments/common :: navbar}"></nav>
+<div th:replace="~{fragments/common :: alerts}"></div>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body p-4">
+                    <h3 class="card-title mb-3">Raise a Complaint</h3>
+
+                    <div class="alert alert-danger" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+
+                    <form th:action="@{/customer/complaints}" th:object="${complaintForm}" method="post">
+                        <div class="mb-3">
+                            <label class="form-label">Category</label>
+                            <select class="form-select" th:field="*{category}"
+                                    th:classappend="${#fields.hasErrors('category')} ? 'is-invalid'">
+                                <option value="">-- Select a category --</option>
+                                <option th:each="cat : ${T(com.kamaleshwar.telecom_complaint_system.entity.enums.ComplaintCategory).values()}"
+                                        th:value="${cat}" th:text="${cat}"></option>
+                            </select>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('category')}" th:errors="*{category}"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Priority</label>
+                            <select class="form-select" th:field="*{priority}"
+                                    th:classappend="${#fields.hasErrors('priority')} ? 'is-invalid'">
+                                <option value="">-- Select a priority --</option>
+                                <option th:each="p : ${T(com.kamaleshwar.telecom_complaint_system.entity.enums.Priority).values()}"
+                                        th:value="${p}" th:text="${p}"></option>
+                            </select>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('priority')}" th:errors="*{priority}"></div>
+                            <div class="form-text">How urgent is this issue for you? This affects how quickly it must be resolved.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" rows="5" th:field="*{description}"
+                                      th:classappend="${#fields.hasErrors('description')} ? 'is-invalid'"
+                                      placeholder="Describe the problem in detail..."></textarea>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Submit Complaint</button>
+                        <a th:href="@{/customer/complaints}" class="btn btn-outline-secondary">Cancel</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block th:replace="~{fragments/common :: scripts}"></th:block>
+</body>
+</html>

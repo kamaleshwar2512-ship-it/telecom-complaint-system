@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="'Complaint #' + ${complaint.id} + ' - Telecom Complaint Tracker'">Complaint</title>
+    <th:block th:replace="~{fragments/common :: head-imports}"></th:block>
+</head>
+<body>
+<nav th:replace="~{fragments/common :: navbar}"></nav>
+<div th:replace="~{fragments/common :: alerts}"></div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <h3 th:text="'Complaint #' + ${complaint.id}">Complaint #1</h3>
+                        <span class="badge fs-6" th:classappend="${@slaDisplayService.badgeClass(complaint)}"
+                              th:text="${@slaDisplayService.urgencyLabel(complaint)}">Status</span>
+                    </div>
+                    <dl class="row mt-3">
+                        <dt class="col-sm-3">Category</dt>
+                        <dd class="col-sm-9" th:text="${complaint.category}">CATEGORY</dd>
+                        <dt class="col-sm-3">Priority</dt>
+                        <dd class="col-sm-9" th:text="${complaint.priority}">PRIORITY</dd>
+                        <dt class="col-sm-3">Status</dt>
+                        <dd class="col-sm-9"><span class="badge bg-secondary" th:text="${complaint.status}">STATUS</span></dd>
+                        <dt class="col-sm-3">Description</dt>
+                        <dd class="col-sm-9" th:text="${complaint.description}">description</dd>
+                        <dt class="col-sm-3">Created</dt>
+                        <dd class="col-sm-9" th:text="${#temporals.format(complaint.createdAt, 'dd MMM yyyy, HH:mm')}">date</dd>
+                        <dt class="col-sm-3">SLA Deadline</dt>
+                        <dd class="col-sm-9" th:text="${#temporals.format(complaint.slaDeadline, 'dd MMM yyyy, HH:mm')}">deadline</dd>
+                        <dt class="col-sm-3">Remaining</dt>
+                        <dd class="col-sm-9">
+                            <span class="sla-countdown" th:attr="data-sla-deadline=${complaint.slaDeadline}"
+                                  th:text="${@slaDisplayService.remainingTime(complaint)}">remaining</span>
+                        </dd>
+                        <dt class="col-sm-3" th:if="${complaint.resolvedAt}">Resolved At</dt>
+                        <dd class="col-sm-9" th:if="${complaint.resolvedAt}" th:text="${#temporals.format(complaint.resolvedAt, 'dd MMM yyyy, HH:mm')}">resolved</dd>
+                        <dt class="col-sm-3" th:if="${complaint.assignedAgent}">Assigned Agent</dt>
+                        <dd class="col-sm-9" th:if="${complaint.assignedAgent}" th:text="${complaint.assignedAgent.name}">agent</dd>
+                    </dl>
+
+                    <form th:if="${complaint.status.name() == 'RESOLVED'}" th:action="@{'/customer/complaints/' + ${complaint.id} + '/reopen'}" method="post">
+                        <button type="submit" class="btn btn-outline-warning">Reopen Complaint</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">Activity Timeline</div>
+                <div class="card-body">
+                    <ul class="timeline">
+                        <li th:each="u : ${timeline}">
+                            <div class="small text-muted" th:text="${#temporals.format(u.timestamp, 'dd MMM yyyy, HH:mm')}">date</div>
+                            <div th:text="${u.note}">note</div>
+                            <div class="small text-muted" th:if="${u.agent}" th:text="'by ' + ${u.agent.name}">agent</div>
+                            <div class="small text-muted fst-italic" th:unless="${u.agent}">system</div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block th:replace="~{fragments/common :: scripts}"></th:block>
+<script th:src="@{/js/countdown.js}"></script>
+</body>
+</html>

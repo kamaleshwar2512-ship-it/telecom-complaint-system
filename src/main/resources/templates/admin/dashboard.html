@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Admin Dashboard - Telecom Complaint Tracker</title>
+    <th:block th:replace="~{fragments/common :: head-imports}"></th:block>
+</head>
+<body>
+<nav th:replace="~{fragments/common :: navbar}"></nav>
+<div th:replace="~{fragments/common :: alerts}"></div>
+
+<div class="container">
+    <h2 class="mb-4">Admin Dashboard</h2>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-2 col-6">
+            <div class="card stat-card text-center p-3">
+                <div class="text-muted small">Total</div>
+                <div class="display-6" th:text="${stats.totalComplaints}">0</div>
+            </div>
+        </div>
+        <div class="col-md-2 col-6">
+            <div class="card stat-card text-center p-3">
+                <div class="text-muted small">Open</div>
+                <div class="display-6 text-primary" th:text="${stats.openCount}">0</div>
+            </div>
+        </div>
+        <div class="col-md-2 col-6">
+            <div class="card stat-card text-center p-3">
+                <div class="text-muted small">In Progress</div>
+                <div class="display-6 text-info" th:text="${stats.inProgressCount}">0</div>
+            </div>
+        </div>
+        <div class="col-md-2 col-6">
+            <div class="card stat-card text-center p-3">
+                <div class="text-muted small">Escalated</div>
+                <div class="display-6 text-warning" th:text="${stats.escalatedCount}">0</div>
+            </div>
+        </div>
+        <div class="col-md-2 col-6">
+            <div class="card stat-card text-center p-3">
+                <div class="text-muted small">Resolved</div>
+                <div class="display-6 text-success" th:text="${stats.resolvedCount}">0</div>
+            </div>
+        </div>
+        <div class="col-md-2 col-6">
+            <div class="card stat-card text-center p-3">
+                <div class="text-muted small">Breached</div>
+                <div class="display-6 text-danger" th:text="${stats.breachedCount}">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-4">
+        <a th:href="@{/admin/complaints(filter='breached')}" class="btn btn-outline-danger btn-sm">View Breach Report</a>
+        <a th:href="@{/admin/complaints(filter='escalated')}" class="btn btn-outline-warning btn-sm">View Escalated</a>
+        <a th:href="@{/admin/complaints}" class="btn btn-outline-secondary btn-sm">View All Complaints</a>
+        <a th:href="@{/admin/sla-rules}" class="btn btn-outline-primary btn-sm">Manage SLA Rules</a>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">Complaints by Status</div>
+                <div class="card-body"><canvas id="statusChart" height="220"></canvas></div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">Complaints by Category</div>
+                <div class="card-body"><canvas id="categoryChart" height="220"></canvas></div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">Avg. Resolution Time by Category (hours)</div>
+                <div class="card-body"><canvas id="resolutionChart" height="220"></canvas></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block th:replace="~{fragments/common :: scripts}"></th:block>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const statusLabels = /*[[${stats.statusLabels}]]*/ [];
+    const statusCounts = /*[[${stats.statusCounts}]]*/ [];
+    const categoryLabels = /*[[${stats.categoryLabels}]]*/ [];
+    const categoryCounts = /*[[${stats.categoryCounts}]]*/ [];
+    const avgResolutionLabels = /*[[${stats.avgResolutionLabels}]]*/ [];
+    const avgResolutionHours = /*[[${stats.avgResolutionHours}]]*/ [];
+
+    new Chart(document.getElementById('statusChart'), {
+        type: 'doughnut',
+        data: {
+            labels: statusLabels,
+            datasets: [{data: statusCounts, backgroundColor: ['#0d6efd', '#0dcaf0', '#ffc107', '#198754', '#6c757d']}]
+        },
+        options: {plugins: {legend: {position: 'bottom'}}}
+    });
+
+    new Chart(document.getElementById('categoryChart'), {
+        type: 'bar',
+        data: {
+            labels: categoryLabels,
+            datasets: [{label: 'Complaints', data: categoryCounts, backgroundColor: '#0d6efd'}]
+        },
+        options: {plugins: {legend: {display: false}}, scales: {y: {beginAtZero: true, ticks: {precision: 0}}}}
+    });
+
+    new Chart(document.getElementById('resolutionChart'), {
+        type: 'bar',
+        data: {
+            labels: avgResolutionLabels,
+            datasets: [{label: 'Avg hours to resolve', data: avgResolutionHours, backgroundColor: '#198754'}]
+        },
+        options: {plugins: {legend: {display: false}}, scales: {y: {beginAtZero: true}}}
+    });
+    /*]]>*/
+</script>
+</body>
+</html>

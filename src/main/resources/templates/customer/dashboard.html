@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="https://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>My Dashboard - Telecom Complaint Tracker</title>
+    <th:block th:replace="~{fragments/common :: head-imports}"></th:block>
+</head>
+<body>
+<nav th:replace="~{fragments/common :: navbar}"></nav>
+<div th:replace="~{fragments/common :: alerts}"></div>
+
+<div class="container">
+    <h2 class="mb-4">My Dashboard</h2>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-6">
+            <div class="card stat-card text-center p-3">
+                <div class="text-muted small">Total Complaints</div>
+                <div class="display-6" th:text="${totalComplaints}">0</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card stat-card text-center p-3">
+                <div class="text-muted small">Open / In Progress</div>
+                <div class="display-6 text-primary" th:text="${openCount}">0</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card stat-card text-center p-3">
+                <div class="text-muted small">Escalated</div>
+                <div class="display-6 text-warning" th:text="${escalatedCount}">0</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card stat-card text-center p-3">
+                <div class="text-muted small">Resolved / Closed</div>
+                <div class="display-6 text-success" th:text="${resolvedCount}">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h4 class="mb-0">Recent Complaints</h4>
+        <div>
+            <a th:href="@{/customer/complaints/new}" class="btn btn-primary btn-sm">Raise a Complaint</a>
+            <a th:href="@{/customer/complaints}" class="btn btn-outline-secondary btn-sm">View All</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Category</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>SLA Remaining</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(complaints)}">
+                    <td colspan="6" class="text-center text-muted py-4">You haven't raised any complaints yet.</td>
+                </tr>
+                <tr th:each="c : ${complaints}">
+                    <td><a th:href="@{'/customer/complaints/' + ${c.id}}" th:text="'#' + ${c.id}">#1</a></td>
+                    <td th:text="${c.category}">CATEGORY</td>
+                    <td th:text="${c.priority}">PRIORITY</td>
+                    <td><span class="badge bg-secondary" th:text="${c.status}">STATUS</span></td>
+                    <td th:text="${#temporals.format(c.createdAt, 'dd MMM yyyy, HH:mm')}">date</td>
+                    <td>
+                        <span class="badge sla-countdown" th:classappend="${@slaDisplayService.badgeClass(c)}"
+                              th:text="${@slaDisplayService.remainingTime(c)}">remaining</span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<th:block th:replace="~{fragments/common :: scripts}"></th:block>
+</body>
+</html>

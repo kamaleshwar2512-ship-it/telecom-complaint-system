@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>My Complaints - Telecom Complaint Tracker</title>
+    <th:block th:replace="~{fragments/common :: head-imports}"></th:block>
+</head>
+<body>
+<nav th:replace="~{fragments/common :: navbar}"></nav>
+<div th:replace="~{fragments/common :: alerts}"></div>
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">My Complaints</h2>
+        <a th:href="@{/customer/complaints/new}" class="btn btn-primary">Raise a Complaint</a>
+    </div>
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Category</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>SLA Deadline</th>
+                    <th>Remaining</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(complaints)}">
+                    <td colspan="7" class="text-center text-muted py-4">You haven't raised any complaints yet.</td>
+                </tr>
+                <tr th:each="c : ${complaints}">
+                    <td><a th:href="@{'/customer/complaints/' + ${c.id}}" th:text="'#' + ${c.id}">#1</a></td>
+                    <td th:text="${c.category}">CATEGORY</td>
+                    <td th:text="${c.priority}">PRIORITY</td>
+                    <td><span class="badge bg-secondary" th:text="${c.status}">STATUS</span></td>
+                    <td th:text="${#temporals.format(c.createdAt, 'dd MMM yyyy, HH:mm')}">date</td>
+                    <td th:text="${#temporals.format(c.slaDeadline, 'dd MMM yyyy, HH:mm')}">deadline</td>
+                    <td>
+                        <span class="badge sla-countdown" th:classappend="${@slaDisplayService.badgeClass(c)}"
+                              th:text="${@slaDisplayService.remainingTime(c)}">remaining</span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<th:block th:replace="~{fragments/common :: scripts}"></th:block>
+</body>
+</html>
