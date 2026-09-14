@@ -1,73 +1,139 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>My Queue - Telecom Complaint Tracker</title>
+    <title>My Queue - Telecom Care</title>
     <th:block th:replace="~{fragments/common :: head-imports}"></th:block>
 </head>
 <body>
-<nav th:replace="~{fragments/common :: navbar}"></nav>
-<div th:replace="~{fragments/common :: alerts}"></div>
+<nav th:replace="~{fragments/common :: navbar('agent-dashboard')}"></nav>
 
-<div class="container">
-    <h2 class="mb-4">My Complaint Queue</h2>
+<main class="app-main"
+      th:with="agentName=${#lists.isEmpty(complaints)
+                            ? #strings.capitalize(#strings.substringBefore(#authentication.name, '@'))
+                            : complaints[0].assignedAgent.name},
+               hourOfDay=${T(java.time.LocalTime).now().getHour()},
+               active=${complaints.?[status.name() != 'RESOLVED' and status.name() != 'CLOSED']},
+               doneList=${complaints.?[status.name() == 'RESOLVED' or status.name() == 'CLOSED']}">
+    <div class="app-container"
+         th:with="breachedList=${active.?[breached]},
+                  atRiskList=${active.?[approachingNotified and !breached]},
+                  steadyList=${active.?[!breached and !approachingNotified]}">
 
-    <div class="row g-3 mb-4">
-        <div class="col-md-4 col-6">
-            <div class="card stat-card text-center p-3">
-                <div class="text-muted small">Assigned</div>
-                <div class="display-6" th:text="${#lists.size(complaints)}">0</div>
+        <div th:replace="~{fragments/common :: alerts}"></div>
+
+        <!--/* ---------- Header ---------- */-->
+        <div class="page-header">
+            <div class="page-header__text">
+                <h1 th:text="${(hourOfDay &lt; 12 ? 'Good morning' : (hourOfDay &lt; 17 ? 'Good afternoon' : 'Good evening')) + ', ' + agentName}">
+                    Good morning
+                </h1>
+                <p>Here is your complaint queue and SLA workload, ordered by urgency.</p>
             </div>
         </div>
-        <div class="col-md-4 col-6">
-            <div class="card stat-card text-center p-3">
-                <div class="text-muted small">Open / In Progress</div>
-                <div class="display-6 text-primary" th:text="${openCount}">0</div>
+
+        <!--/* ---------- Workload summary ---------- */-->
+        <div class="stat-grid">
+            <div class="stat-card stat-card--neutral">
+                <div class="stat-card__top">
+                    <span class="t-label">Assigned</span>
+                    <span class="stat-card__icon"><i class="bi bi-inboxes"></i></span>
+                </div>
+                <div class="stat-card__value" th:text="${#lists.size(complaints)}">0</div>
+                <p class="stat-card__hint">Complaints in your name</p>
+            </div>
+
+            <div class="stat-card stat-card--primary">
+                <div class="stat-card__top">
+                    <span class="t-label">Needs attention</span>
+                    <span class="stat-card__icon"><i class="bi bi-hand-index-thumb"></i></span>
+                </div>
+                <div class="stat-card__value" th:text="${#lists.size(breachedList) + #lists.size(atRiskList)}">0</div>
+                <p class="stat-card__hint">Breached or approaching deadline</p>
+            </div>
+
+            <div class="stat-card stat-card--warning">
+                <div class="stat-card__top">
+                    <span class="t-label">At risk</span>
+                    <span class="stat-card__icon"><i class="bi bi-clock-history"></i></span>
+                </div>
+                <div class="stat-card__value" th:text="${#lists.size(atRiskList)}">0</div>
+                <p class="stat-card__hint">Approaching the deadline</p>
+            </div>
+
+            <div class="stat-card stat-card--danger">
+                <div class="stat-card__top">
+                    <span class="t-label">Breached</span>
+                    <span class="stat-card__icon"><i class="bi bi-exclamation-octagon"></i></span>
+                </div>
+                <div class="stat-card__value" th:text="${#lists.size(breachedList)}">0</div>
+                <p class="stat-card__hint">Past the resolution deadline</p>
             </div>
         </div>
-        <div class="col-md-4 col-6">
-            <div class="card stat-card text-center p-3">
-                <div class="text-muted small">Escalated</div>
-                <div class="display-6 text-danger" th:text="${escalatedCount}">0</div>
+
+        <!--/* ---------- Attention required ---------- */-->
+        <div class="mt-4" th:if="${!#lists.isEmpty(breachedList) or !#lists.isEmpty(atRiskList)}">
+            <div class="attention"
+                 th:classappend="${!#lists.isEmpty(breachedList)} ? 'attention--danger' : 'attention--warning'">
+                <span class="attention__icon"><i class="bi bi-exclamation-triangle-fill"></i></span>
+                <div class="attention__body">
+                    <h2 class="attention__title">Attention required</h2>
+                    <p class="attention__text"
+                       th:text="${#lists.size(breachedList)} + ' breached and ' + ${#lists.size(atRiskList)} + ' at-risk complaints are waiting on you. Work these first.'">
+                        Work these first.
+                    </p>
+                </div>
             </div>
         </div>
+
+        <!--/* ---------- The queue, urgency first ---------- */-->
+        <div class="mt-4" th:if="${#lists.isEmpty(complaints)}">
+            <div class="panel">
+                <div th:replace="~{fragments/common :: emptyState(
+                        'bi-check2-all',
+                        'Your queue is empty',
+                        'No complaints are currently assigned to you. New work will appear here as soon as an administrator assigns it.',
+                        '', '')}"></div>
+            </div>
+        </div>
+
+        <div class="mt-4" th:unless="${#lists.isEmpty(complaints)}">
+            <div class="queue-group" th:if="${!#lists.isEmpty(breachedList)}">
+                <div class="queue-group__label">
+                    <i class="bi bi-exclamation-octagon-fill text-danger-app"></i> Breached
+                    <span class="badge badge-count" th:text="${#lists.size(breachedList)}">1</span>
+                </div>
+                <div th:replace="~{fragments/queue :: queueTable(${breachedList})}"></div>
+            </div>
+
+            <div class="queue-group" th:if="${!#lists.isEmpty(atRiskList)}">
+                <div class="queue-group__label">
+                    <i class="bi bi-clock-history text-warning-app"></i> At risk
+                    <span class="badge badge-count" th:text="${#lists.size(atRiskList)}">2</span>
+                </div>
+                <div th:replace="~{fragments/queue :: queueTable(${atRiskList})}"></div>
+            </div>
+
+            <div class="queue-group" th:if="${!#lists.isEmpty(steadyList)}">
+                <div class="queue-group__label">
+                    <i class="bi bi-list-task"></i> In the queue
+                    <span class="badge badge-count" th:text="${#lists.size(steadyList)}">5</span>
+                </div>
+                <div th:replace="~{fragments/queue :: queueTable(${steadyList})}"></div>
+            </div>
+
+            <div class="queue-group" th:if="${!#lists.isEmpty(doneList)}">
+                <div class="queue-group__label">
+                    <i class="bi bi-check2-circle text-success-app"></i> Completed
+                    <span class="badge badge-count" th:text="${#lists.size(doneList)}">3</span>
+                </div>
+                <div th:replace="~{fragments/queue :: queueTable(${doneList})}"></div>
+            </div>
+        </div>
+
     </div>
+</main>
 
-    <div class="card">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0 align-middle">
-                <thead class="table-light">
-                <tr>
-                    <th>ID</th>
-                    <th>Customer</th>
-                    <th>Category</th>
-                    <th>Priority</th>
-                    <th>Status</th>
-                    <th>SLA Remaining</th>
-                    <th>Urgency</th>
-                    <th></th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:if="${#lists.isEmpty(complaints)}">
-                    <td colspan="8" class="text-center text-muted py-4">No complaints assigned to you yet.</td>
-                </tr>
-                <tr th:each="c : ${complaints}">
-                    <td th:text="'#' + ${c.id}">#1</td>
-                    <td th:text="${c.customer.name}">customer</td>
-                    <td th:text="${c.category}">CATEGORY</td>
-                    <td th:text="${c.priority}">PRIORITY</td>
-                    <td><span class="badge bg-secondary" th:text="${c.status}">STATUS</span></td>
-                    <td th:text="${@slaDisplayService.remainingTime(c)}">remaining</td>
-                    <td><span class="badge" th:classappend="${@slaDisplayService.badgeClass(c)}"
-                              th:text="${@slaDisplayService.urgencyLabel(c)}">urgency</span></td>
-                    <td><a th:href="@{'/agent/complaints/' + ${c.id}}" class="btn btn-sm btn-outline-primary">Open</a></td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
+<footer th:replace="~{fragments/common :: footer}"></footer>
 <th:block th:replace="~{fragments/common :: scripts}"></th:block>
 </body>
 </html>

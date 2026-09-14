@@ -1,88 +1,183 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Admin Dashboard - Telecom Complaint Tracker</title>
+    <title>Admin Dashboard - Telecom Care</title>
     <th:block th:replace="~{fragments/common :: head-imports}"></th:block>
 </head>
 <body>
-<nav th:replace="~{fragments/common :: navbar}"></nav>
-<div th:replace="~{fragments/common :: alerts}"></div>
+<nav th:replace="~{fragments/common :: navbar('admin-dashboard')}"></nav>
 
-<div class="container">
-    <h2 class="mb-4">Admin Dashboard</h2>
+<main class="app-main">
+    <div class="app-container">
 
-    <div class="row g-3 mb-4">
-        <div class="col-md-2 col-6">
-            <div class="card stat-card text-center p-3">
-                <div class="text-muted small">Total</div>
-                <div class="display-6" th:text="${stats.totalComplaints}">0</div>
+        <div th:replace="~{fragments/common :: alerts}"></div>
+
+        <div class="page-header">
+            <div class="page-header__text">
+                <div class="eyebrow">Operations</div>
+                <h1>Admin Dashboard</h1>
+                <p>Monitor complaint volume, SLA performance and escalations across the whole service desk.</p>
+            </div>
+            <div class="page-header__actions">
+                <a th:href="@{/admin/sla-rules}" class="btn btn-secondary"><i class="bi bi-sliders2"></i> SLA rules</a>
+                <a th:href="@{/admin/complaints}" class="btn btn-primary"><i class="bi bi-card-list"></i> All complaints</a>
             </div>
         </div>
-        <div class="col-md-2 col-6">
-            <div class="card stat-card text-center p-3">
-                <div class="text-muted small">Open</div>
-                <div class="display-6 text-primary" th:text="${stats.openCount}">0</div>
+
+        <!--/* ---------- Operational summary ---------- */-->
+        <div class="stat-grid stat-grid--6">
+            <a th:href="@{/admin/complaints}" class="stat-card stat-card--neutral">
+                <div class="stat-card__top">
+                    <span class="t-label">Total</span>
+                    <span class="stat-card__icon"><i class="bi bi-collection"></i></span>
+                </div>
+                <div class="stat-card__value" th:text="${stats.totalComplaints}">0</div>
+                <p class="stat-card__hint">All complaints on record</p>
+            </a>
+
+            <a th:href="@{/admin/complaints(filter='open')}" class="stat-card stat-card--primary">
+                <div class="stat-card__top">
+                    <span class="t-label">Open</span>
+                    <span class="stat-card__icon"><i class="bi bi-envelope-open"></i></span>
+                </div>
+                <div class="stat-card__value" th:text="${stats.openCount}">0</div>
+                <p class="stat-card__hint">Awaiting first action</p>
+            </a>
+
+            <a th:href="@{/admin/complaints(filter='open')}" class="stat-card stat-card--info">
+                <div class="stat-card__top">
+                    <span class="t-label">In progress</span>
+                    <span class="stat-card__icon"><i class="bi bi-arrow-repeat"></i></span>
+                </div>
+                <div class="stat-card__value" th:text="${stats.inProgressCount}">0</div>
+                <p class="stat-card__hint">Being worked by agents</p>
+            </a>
+
+            <a th:href="@{/admin/complaints(filter='escalated')}" class="stat-card stat-card--warning">
+                <div class="stat-card__top">
+                    <span class="t-label">Escalated</span>
+                    <span class="stat-card__icon"><i class="bi bi-arrow-up-right-circle"></i></span>
+                </div>
+                <div class="stat-card__value" th:text="${stats.escalatedCount}">0</div>
+                <p class="stat-card__hint">Raised for priority handling</p>
+            </a>
+
+            <a th:href="@{/admin/complaints(filter='resolved')}" class="stat-card stat-card--success">
+                <div class="stat-card__top">
+                    <span class="t-label">Resolved</span>
+                    <span class="stat-card__icon"><i class="bi bi-check2-circle"></i></span>
+                </div>
+                <div class="stat-card__value" th:text="${stats.resolvedCount}">0</div>
+                <p class="stat-card__hint">Closed out successfully</p>
+            </a>
+
+            <a th:href="@{/admin/complaints(filter='breached')}" class="stat-card stat-card--danger">
+                <div class="stat-card__top">
+                    <span class="t-label">Breached</span>
+                    <span class="stat-card__icon"><i class="bi bi-exclamation-octagon"></i></span>
+                </div>
+                <div class="stat-card__value" th:text="${stats.breachedCount}">0</div>
+                <p class="stat-card__hint">Missed the resolution deadline</p>
+            </a>
+        </div>
+
+        <!--/* ---------- SLA attention ---------- */-->
+        <div class="mt-4">
+            <div class="attention attention--danger" th:if="${stats.breachedCount > 0}">
+                <span class="attention__icon"><i class="bi bi-exclamation-triangle-fill"></i></span>
+                <div class="attention__body">
+                    <h2 class="attention__title">SLA attention required</h2>
+                    <p class="attention__text"
+                       th:text="${stats.breachedCount} + (${stats.breachedCount == 1} ? ' complaint has' : ' complaints have') + ' breached their SLA deadline.'">
+                        Complaints have breached their SLA.
+                    </p>
+                </div>
+                <a th:href="@{/admin/complaints(filter='breached')}" class="btn btn-danger nowrap">
+                    <i class="bi bi-file-earmark-bar-graph"></i> View breach report
+                </a>
+            </div>
+
+            <div class="attention attention--success" th:if="${stats.breachedCount == 0}">
+                <span class="attention__icon"><i class="bi bi-shield-check"></i></span>
+                <div class="attention__body">
+                    <h2 class="attention__title">SLA performance is healthy</h2>
+                    <p class="attention__text">No complaint has breached its resolution deadline.</p>
+                </div>
+                <a th:href="@{/admin/complaints(filter='escalated')}" class="btn btn-secondary nowrap">
+                    <i class="bi bi-arrow-up-right-circle"></i> Review escalations
+                </a>
             </div>
         </div>
-        <div class="col-md-2 col-6">
-            <div class="card stat-card text-center p-3">
-                <div class="text-muted small">In Progress</div>
-                <div class="display-6 text-info" th:text="${stats.inProgressCount}">0</div>
+
+        <!--/* ---------- Charts ---------- */-->
+        <div class="mt-4">
+            <div class="section-heading">
+                <div>
+                    <h2><i class="bi bi-bar-chart-line"></i> Service analytics</h2>
+                    <p class="t-helper">Aggregated on the server from live complaint data.</p>
+                </div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-xl-4 col-lg-6">
+                    <section class="panel chart-card">
+                        <div class="panel-header">
+                            <div>
+                                <div class="panel-header__title"><i class="bi bi-pie-chart"></i> Complaint status</div>
+                                <p class="panel-header__sub">Distribution across the lifecycle</p>
+                            </div>
+                        </div>
+                        <div class="panel-body">
+                            <div class="chart-box" th:if="${stats.totalComplaints > 0}"><canvas id="statusChart"></canvas></div>
+                            <div th:if="${stats.totalComplaints == 0}"
+                                 th:replace="~{fragments/common :: emptyState('bi-pie-chart', 'No data yet', 'Complaint status will be charted here once complaints are raised.', '', '')}"></div>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="col-xl-4 col-lg-6">
+                    <section class="panel chart-card">
+                        <div class="panel-header">
+                            <div>
+                                <div class="panel-header__title"><i class="bi bi-bar-chart"></i> Complaints by category</div>
+                                <p class="panel-header__sub">Where the volume is coming from</p>
+                            </div>
+                        </div>
+                        <div class="panel-body">
+                            <div class="chart-box" th:if="${stats.totalComplaints > 0}"><canvas id="categoryChart"></canvas></div>
+                            <div th:if="${stats.totalComplaints == 0}"
+                                 th:replace="~{fragments/common :: emptyState('bi-bar-chart', 'No data yet', 'Category volumes appear here once complaints are raised.', '', '')}"></div>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="col-xl-4 col-lg-12">
+                    <section class="panel chart-card">
+                        <div class="panel-header">
+                            <div>
+                                <div class="panel-header__title"><i class="bi bi-speedometer"></i> Average resolution time</div>
+                                <p class="panel-header__sub">Hours from raise to resolution, by category</p>
+                            </div>
+                        </div>
+                        <div class="panel-body">
+                            <div class="chart-box" th:if="${stats.resolvedCount + stats.closedCount > 0}"><canvas id="resolutionChart"></canvas></div>
+                            <div th:if="${stats.resolvedCount + stats.closedCount == 0}"
+                                 th:replace="~{fragments/common :: emptyState('bi-speedometer', 'Nothing resolved yet', 'Average resolution times appear once complaints have been resolved.', '', '')}"></div>
+                        </div>
+                    </section>
+                </div>
             </div>
         </div>
-        <div class="col-md-2 col-6">
-            <div class="card stat-card text-center p-3">
-                <div class="text-muted small">Escalated</div>
-                <div class="display-6 text-warning" th:text="${stats.escalatedCount}">0</div>
-            </div>
-        </div>
-        <div class="col-md-2 col-6">
-            <div class="card stat-card text-center p-3">
-                <div class="text-muted small">Resolved</div>
-                <div class="display-6 text-success" th:text="${stats.resolvedCount}">0</div>
-            </div>
-        </div>
-        <div class="col-md-2 col-6">
-            <div class="card stat-card text-center p-3">
-                <div class="text-muted small">Breached</div>
-                <div class="display-6 text-danger" th:text="${stats.breachedCount}">0</div>
-            </div>
-        </div>
+
     </div>
+</main>
 
-    <div class="mb-4">
-        <a th:href="@{/admin/complaints(filter='breached')}" class="btn btn-outline-danger btn-sm">View Breach Report</a>
-        <a th:href="@{/admin/complaints(filter='escalated')}" class="btn btn-outline-warning btn-sm">View Escalated</a>
-        <a th:href="@{/admin/complaints}" class="btn btn-outline-secondary btn-sm">View All Complaints</a>
-        <a th:href="@{/admin/sla-rules}" class="btn btn-outline-primary btn-sm">Manage SLA Rules</a>
-    </div>
-
-    <div class="row g-3">
-        <div class="col-lg-4">
-            <div class="card">
-                <div class="card-header">Complaints by Status</div>
-                <div class="card-body"><canvas id="statusChart" height="220"></canvas></div>
-            </div>
-        </div>
-        <div class="col-lg-4">
-            <div class="card">
-                <div class="card-header">Complaints by Category</div>
-                <div class="card-body"><canvas id="categoryChart" height="220"></canvas></div>
-            </div>
-        </div>
-        <div class="col-lg-4">
-            <div class="card">
-                <div class="card-header">Avg. Resolution Time by Category (hours)</div>
-                <div class="card-body"><canvas id="resolutionChart" height="220"></canvas></div>
-            </div>
-        </div>
-    </div>
-</div>
-
+<footer th:replace="~{fragments/common :: footer}"></footer>
 <th:block th:replace="~{fragments/common :: scripts}"></th:block>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script th:inline="javascript">
     /*<![CDATA[*/
+    // All values below are rendered by the server from live complaint data.
     const statusLabels = /*[[${stats.statusLabels}]]*/ [];
     const statusCounts = /*[[${stats.statusCounts}]]*/ [];
     const categoryLabels = /*[[${stats.categoryLabels}]]*/ [];
@@ -90,32 +185,109 @@
     const avgResolutionLabels = /*[[${stats.avgResolutionLabels}]]*/ [];
     const avgResolutionHours = /*[[${stats.avgResolutionHours}]]*/ [];
 
-    new Chart(document.getElementById('statusChart'), {
-        type: 'doughnut',
-        data: {
-            labels: statusLabels,
-            datasets: [{data: statusCounts, backgroundColor: ['#0d6efd', '#0dcaf0', '#ffc107', '#198754', '#6c757d']}]
-        },
-        options: {plugins: {legend: {position: 'bottom'}}}
-    });
+    const TOKENS = {
+        primary: '#2563eb',
+        info: '#0e7490',
+        warning: '#f59e0b',
+        success: '#15803d',
+        neutral: '#94a3b8',
+        danger: '#dc2626',
+        grid: '#e4e9f2',
+        text: '#5b6b85'
+    };
 
-    new Chart(document.getElementById('categoryChart'), {
-        type: 'bar',
-        data: {
-            labels: categoryLabels,
-            datasets: [{label: 'Complaints', data: categoryCounts, backgroundColor: '#0d6efd'}]
-        },
-        options: {plugins: {legend: {display: false}}, scales: {y: {beginAtZero: true, ticks: {precision: 0}}}}
-    });
+    function pretty(label) {
+        return label.charAt(0) + label.slice(1).toLowerCase().replace(/_/g, ' ');
+    }
 
-    new Chart(document.getElementById('resolutionChart'), {
-        type: 'bar',
-        data: {
-            labels: avgResolutionLabels,
-            datasets: [{label: 'Avg hours to resolve', data: avgResolutionHours, backgroundColor: '#198754'}]
-        },
-        options: {plugins: {legend: {display: false}}, scales: {y: {beginAtZero: true}}}
-    });
+    if (window.Chart) {
+        Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
+        Chart.defaults.font.size = 12;
+        Chart.defaults.color = TOKENS.text;
+        Chart.defaults.plugins.tooltip.backgroundColor = '#0f1c33';
+        Chart.defaults.plugins.tooltip.padding = 10;
+        Chart.defaults.plugins.tooltip.cornerRadius = 8;
+        Chart.defaults.plugins.tooltip.titleFont = { weight: '600' };
+        Chart.defaults.maintainAspectRatio = false;
+    }
+
+    const legendBottom = {
+        position: 'bottom',
+        labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 8, padding: 14 }
+    };
+
+    const barScales = {
+        x: { grid: { display: false }, border: { display: false } },
+        y: {
+            beginAtZero: true,
+            border: { display: false },
+            grid: { color: TOKENS.grid, drawTicks: false },
+            ticks: { precision: 0, padding: 8 }
+        }
+    };
+
+    const statusCanvas = document.getElementById('statusChart');
+    if (statusCanvas) {
+        new Chart(statusCanvas, {
+            type: 'doughnut',
+            data: {
+                labels: statusLabels.map(pretty),
+                datasets: [{
+                    data: statusCounts,
+                    backgroundColor: [TOKENS.primary, TOKENS.info, TOKENS.warning, TOKENS.success, TOKENS.neutral],
+                    borderColor: '#ffffff',
+                    borderWidth: 2,
+                    hoverOffset: 6
+                }]
+            },
+            options: { cutout: '62%', plugins: { legend: legendBottom } }
+        });
+    }
+
+    const categoryCanvas = document.getElementById('categoryChart');
+    if (categoryCanvas) {
+        new Chart(categoryCanvas, {
+            type: 'bar',
+            data: {
+                labels: categoryLabels.map(pretty),
+                datasets: [{
+                    label: 'Complaints',
+                    data: categoryCounts,
+                    backgroundColor: TOKENS.primary,
+                    hoverBackgroundColor: '#1d4ed8',
+                    borderRadius: 6,
+                    maxBarThickness: 38
+                }]
+            },
+            options: { plugins: { legend: { display: false } }, scales: barScales }
+        });
+    }
+
+    const resolutionCanvas = document.getElementById('resolutionChart');
+    if (resolutionCanvas) {
+        new Chart(resolutionCanvas, {
+            type: 'bar',
+            data: {
+                labels: avgResolutionLabels.map(pretty),
+                datasets: [{
+                    label: 'Average hours to resolve',
+                    data: avgResolutionHours,
+                    backgroundColor: TOKENS.success,
+                    hoverBackgroundColor: '#126c34',
+                    borderRadius: 6,
+                    maxBarThickness: 38
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { beginAtZero: true, border: { display: false }, grid: { color: TOKENS.grid, drawTicks: false } },
+                    y: { grid: { display: false }, border: { display: false } }
+                }
+            }
+        });
+    }
     /*]]>*/
 </script>
 </body>

@@ -1,60 +1,174 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Complaints - Telecom Complaint Tracker</title>
+    <title>Complaints - Telecom Care</title>
     <th:block th:replace="~{fragments/common :: head-imports}"></th:block>
 </head>
 <body>
-<nav th:replace="~{fragments/common :: navbar}"></nav>
-<div th:replace="~{fragments/common :: alerts}"></div>
+<nav th:replace="~{fragments/common :: navbar('admin-complaints')}"></nav>
 
-<div class="container">
-    <h2 class="mb-3">Complaints</h2>
+<main class="app-main">
+    <div class="app-container">
 
-    <ul class="nav nav-pills mb-3">
-        <li class="nav-item"><a class="nav-link" th:classappend="${filter == 'all'} ? 'active'" th:href="@{/admin/complaints(filter='all')}">All</a></li>
-        <li class="nav-item"><a class="nav-link" th:classappend="${filter == 'open'} ? 'active'" th:href="@{/admin/complaints(filter='open')}">Open</a></li>
-        <li class="nav-item"><a class="nav-link" th:classappend="${filter == 'escalated'} ? 'active'" th:href="@{/admin/complaints(filter='escalated')}">Escalated</a></li>
-        <li class="nav-item"><a class="nav-link" th:classappend="${filter == 'resolved'} ? 'active'" th:href="@{/admin/complaints(filter='resolved')}">Resolved</a></li>
-        <li class="nav-item"><a class="nav-link" th:classappend="${filter == 'breached'} ? 'active'" th:href="@{/admin/complaints(filter='breached')}">Breached</a></li>
-    </ul>
+        <div th:replace="~{fragments/common :: alerts}"></div>
 
-    <div class="card">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0 align-middle">
-                <thead class="table-light">
-                <tr>
-                    <th>ID</th>
-                    <th>Customer</th>
-                    <th>Category</th>
-                    <th>Priority</th>
-                    <th>Status</th>
-                    <th>Agent</th>
-                    <th>SLA Remaining</th>
-                    <th></th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:if="${#lists.isEmpty(complaints)}">
-                    <td colspan="8" class="text-center text-muted py-4">No complaints found.</td>
-                </tr>
-                <tr th:each="c : ${complaints}">
-                    <td th:text="'#' + ${c.id}">#1</td>
-                    <td th:text="${c.customer.name}">customer</td>
-                    <td th:text="${c.category}">CATEGORY</td>
-                    <td th:text="${c.priority}">PRIORITY</td>
-                    <td><span class="badge bg-secondary" th:text="${c.status}">STATUS</span></td>
-                    <td th:text="${c.assignedAgent != null ? c.assignedAgent.name : 'Unassigned'}">agent</td>
-                    <td><span class="badge" th:classappend="${@slaDisplayService.badgeClass(c)}"
-                              th:text="${@slaDisplayService.remainingTime(c)}">remaining</span></td>
-                    <td><a th:href="@{'/admin/complaints/' + ${c.id}}" class="btn btn-sm btn-outline-primary">Open</a></td>
-                </tr>
-                </tbody>
-            </table>
+        <div class="page-header">
+            <div class="page-header__text">
+                <div class="eyebrow">Service desk</div>
+                <h1>Complaints</h1>
+                <p>Every complaint in the system, with its owner, status and SLA position.</p>
+            </div>
+            <div class="page-header__actions">
+                <a th:href="@{/admin/complaints(filter='breached')}" class="btn btn-soft-danger">
+                    <i class="bi bi-exclamation-octagon"></i> Breach report
+                </a>
+            </div>
         </div>
-    </div>
-</div>
 
+        <div class="table-wrap">
+            <div class="toolbar">
+                <ul class="filter-tabs">
+                    <li><a class="filter-tab" th:classappend="${filter == 'all'} ? 'active' : ''"
+                           th:href="@{/admin/complaints(filter='all')}"><i class="bi bi-grid"></i> All</a></li>
+                    <li><a class="filter-tab" th:classappend="${filter == 'open'} ? 'active' : ''"
+                           th:href="@{/admin/complaints(filter='open')}"><i class="bi bi-envelope-open"></i> Open</a></li>
+                    <li><a class="filter-tab" th:classappend="${filter == 'escalated'} ? 'active' : ''"
+                           th:href="@{/admin/complaints(filter='escalated')}"><i class="bi bi-arrow-up-right-circle"></i> Escalated</a></li>
+                    <li><a class="filter-tab" th:classappend="${filter == 'resolved'} ? 'active' : ''"
+                           th:href="@{/admin/complaints(filter='resolved')}"><i class="bi bi-check2-circle"></i> Resolved</a></li>
+                    <li><a class="filter-tab" th:classappend="${filter == 'breached'} ? 'active' : ''"
+                           th:href="@{/admin/complaints(filter='breached')}"><i class="bi bi-exclamation-octagon"></i> Breached</a></li>
+                </ul>
+
+                <div class="search-field" th:if="${!#lists.isEmpty(complaints)}">
+                    <i class="bi bi-search"></i>
+                    <input type="search" placeholder="Search complaints, customers, agents..." aria-label="Search complaints"
+                           data-search-input="#adminRecords"
+                           data-search-count="#visibleCount"
+                           data-search-empty="#noMatches"/>
+                </div>
+            </div>
+
+            <div th:if="${!#lists.isEmpty(complaints)}">
+                <div class="panel-body--tight t-helper" style="border-bottom: 1px solid var(--border);">
+                    Showing <b id="visibleCount" th:text="${#lists.size(complaints)}">0</b>
+                    of <b th:text="${#lists.size(complaints)}">0</b> complaints
+                </div>
+
+                <div id="adminRecords">
+                    <div class="table-scroll d-none d-lg-block">
+                        <table class="data-table">
+                            <thead>
+                            <tr>
+                                <th class="col-id">ID</th>
+                                <th>Customer</th>
+                                <th>Complaint</th>
+                                <th>Category</th>
+                                <th>Priority</th>
+                                <th>Status</th>
+                                <th>Agent</th>
+                                <th>SLA</th>
+                                <th class="col-actions"></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="c : ${complaints}" data-search-row
+                                th:classappend="${@slaDisplayService.urgencyLevel(c) == 'red'} ? 'row-flag-red' : (${@slaDisplayService.urgencyLevel(c) == 'amber'} ? 'row-flag-amber' : '')">
+                                <td><span class="cell-id" th:text="'#' + ${c.id}">#1</span></td>
+                                <td>
+                                    <span class="cell-person">
+                                        <span class="avatar-xs" th:text="${#strings.toUpperCase(#strings.substring(c.customer.name, 0, 1))}">A</span>
+                                        <span>
+                                            <span class="cell-primary" th:text="${c.customer.name}">Customer</span>
+                                            <span class="cell-sub" th:text="${c.customer.email}">customer@example.com</span>
+                                        </span>
+                                    </span>
+                                </td>
+                                <td style="min-width: 190px;">
+                                    <span class="cell-primary" th:text="${#strings.abbreviate(c.description, 48)}">Issue summary</span>
+                                    <span class="cell-sub" th:text="'Raised ' + ${#temporals.format(c.createdAt, 'dd MMM, HH:mm')}">Raised 13 Sep</span>
+                                </td>
+                                <td><th:block th:replace="~{fragments/common :: categoryBadge(${c.category})}"></th:block></td>
+                                <td><th:block th:replace="~{fragments/common :: priorityBadge(${c.priority})}"></th:block></td>
+                                <td><th:block th:replace="~{fragments/common :: statusBadge(${c.status})}"></th:block></td>
+                                <td>
+                                    <span class="cell-person" th:if="${c.assignedAgent != null}">
+                                        <span class="avatar-xs avatar-xs--muted" th:text="${#strings.toUpperCase(#strings.substring(c.assignedAgent.name, 0, 1))}">R</span>
+                                        <span class="cell-primary" th:text="${c.assignedAgent.name}">Agent</span>
+                                    </span>
+                                    <span class="t-meta" th:if="${c.assignedAgent == null}">Unassigned</span>
+                                </td>
+                                <td style="min-width: 180px;">
+                                    <th:block th:replace="~{fragments/common :: slaPill(${c})}"></th:block>
+                                    <div class="mt-1">
+                                        <span th:replace="~{fragments/common :: slaCountdown(${c})}">remaining</span>
+                                    </div>
+                                </td>
+                                <td class="col-actions">
+                                    <a th:href="@{'/admin/complaints/' + ${c.id}}" class="btn btn-sm btn-soft">
+                                        Open <i class="bi bi-arrow-right"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="record-list d-lg-none p-3">
+                        <article class="record-card" th:each="c : ${complaints}" data-search-row>
+                            <div class="record-card__top">
+                                <span class="complaint-card__id" th:text="'#' + ${c.id}">#1</span>
+                                <th:block th:replace="~{fragments/common :: statusBadge(${c.status})}"></th:block>
+                            </div>
+                            <div class="cell-person">
+                                <span class="avatar-xs" th:text="${#strings.toUpperCase(#strings.substring(c.customer.name, 0, 1))}">A</span>
+                                <span>
+                                    <span class="cell-primary" th:text="${c.customer.name}">Customer</span>
+                                    <span class="cell-sub" th:text="${c.customer.email}">customer@example.com</span>
+                                </span>
+                            </div>
+                            <p class="t-body mb-0" th:text="${#strings.abbreviate(c.description, 110)}">Issue summary</p>
+                            <div class="complaint-card__tags">
+                                <th:block th:replace="~{fragments/common :: categoryBadge(${c.category})}"></th:block>
+                                <th:block th:replace="~{fragments/common :: priorityBadge(${c.priority})}"></th:block>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                                <th:block th:replace="~{fragments/common :: slaPill(${c})}"></th:block>
+                                <span th:replace="~{fragments/common :: slaCountdown(${c})}">remaining</span>
+                            </div>
+                            <div th:replace="~{fragments/common :: slaMeter(${c})}"></div>
+                            <div class="d-flex align-items-center justify-content-between gap-2">
+                                <span class="t-helper" th:text="${c.assignedAgent != null} ? ${c.assignedAgent.name} : 'Unassigned'">Agent</span>
+                                <a th:href="@{'/admin/complaints/' + ${c.id}}" class="btn btn-sm btn-soft">
+                                    Open <i class="bi bi-arrow-right"></i>
+                                </a>
+                            </div>
+                        </article>
+                    </div>
+                </div>
+
+                <div id="noMatches" hidden>
+                    <div th:replace="~{fragments/common :: emptyState(
+                            'bi-search',
+                            'No matching complaints',
+                            'Nothing matches your search in this view. Try another keyword or switch tabs.',
+                            '', '')}"></div>
+                </div>
+            </div>
+
+            <div th:if="${#lists.isEmpty(complaints)}">
+                <div th:replace="~{fragments/common :: emptyState(
+                        'bi-clipboard-check',
+                        'Nothing in this view',
+                        'There are no complaints matching this filter right now. Switch to another tab to see the rest of the queue.',
+                        '', '')}"></div>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<footer th:replace="~{fragments/common :: footer}"></footer>
 <th:block th:replace="~{fragments/common :: scripts}"></th:block>
 </body>
 </html>

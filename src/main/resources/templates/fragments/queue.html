@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><title>queue fragments</title></head>
+<body>
+
+<!--/*
+  ============================================================================
+  Agent work-queue table. Rendered once per urgency group on the agent
+  dashboard so the most urgent complaints are always read first.
+  Desktop gets a modern data table; small screens get the same records as
+  scannable cards.
+  ============================================================================
+*/-->
+<div th:fragment="queueTable(items)" class="table-wrap">
+    <div class="table-scroll d-none d-lg-block">
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th class="col-id">ID</th>
+                <th>Customer</th>
+                <th>Complaint</th>
+                <th>Category</th>
+                <th>Priority</th>
+                <th>Status</th>
+                <th>SLA</th>
+                <th class="col-actions">Action</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="c : ${items}"
+                th:classappend="${@slaDisplayService.urgencyLevel(c) == 'red'} ? 'row-flag-red' : (${@slaDisplayService.urgencyLevel(c) == 'amber'} ? 'row-flag-amber' : '')">
+                <td><span class="cell-id" th:text="'#' + ${c.id}">#1</span></td>
+                <td>
+                    <span class="cell-person">
+                        <span class="avatar-xs" th:text="${#strings.toUpperCase(#strings.substring(c.customer.name, 0, 1))}">A</span>
+                        <span>
+                            <span class="cell-primary" th:text="${c.customer.name}">Customer</span>
+                            <span class="cell-sub" th:text="${c.customer.email}">customer@example.com</span>
+                        </span>
+                    </span>
+                </td>
+                <td style="min-width: 200px;">
+                    <span class="cell-primary" th:text="${#strings.abbreviate(c.description, 52)}">Issue summary</span>
+                    <span class="cell-sub" th:text="'Raised ' + ${#temporals.format(c.createdAt, 'dd MMM, HH:mm')}">Raised 13 Sep</span>
+                </td>
+                <td><th:block th:replace="~{fragments/common :: categoryBadge(${c.category})}"></th:block></td>
+                <td><th:block th:replace="~{fragments/common :: priorityBadge(${c.priority})}"></th:block></td>
+                <td><th:block th:replace="~{fragments/common :: statusBadge(${c.status})}"></th:block></td>
+                <td style="min-width: 190px;">
+                    <th:block th:replace="~{fragments/common :: slaPill(${c})}"></th:block>
+                    <div class="mt-1">
+                        <span th:replace="~{fragments/common :: slaCountdown(${c})}">remaining</span>
+                    </div>
+                </td>
+                <td class="col-actions">
+                    <a th:href="@{'/agent/complaints/' + ${c.id}}" class="btn btn-sm btn-soft">
+                        Open <i class="bi bi-arrow-right"></i>
+                    </a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="record-list d-lg-none p-3">
+        <article class="record-card" th:each="c : ${items}">
+            <div class="record-card__top">
+                <span class="complaint-card__id" th:text="'#' + ${c.id}">#1</span>
+                <th:block th:replace="~{fragments/common :: statusBadge(${c.status})}"></th:block>
+            </div>
+            <div class="cell-person">
+                <span class="avatar-xs" th:text="${#strings.toUpperCase(#strings.substring(c.customer.name, 0, 1))}">A</span>
+                <span>
+                    <span class="cell-primary" th:text="${c.customer.name}">Customer</span>
+                    <span class="cell-sub" th:text="${c.customer.email}">customer@example.com</span>
+                </span>
+            </div>
+            <p class="t-body mb-0" th:text="${#strings.abbreviate(c.description, 110)}">Issue summary</p>
+            <div class="complaint-card__tags">
+                <th:block th:replace="~{fragments/common :: categoryBadge(${c.category})}"></th:block>
+                <th:block th:replace="~{fragments/common :: priorityBadge(${c.priority})}"></th:block>
+            </div>
+            <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                <th:block th:replace="~{fragments/common :: slaPill(${c})}"></th:block>
+                <span th:replace="~{fragments/common :: slaCountdown(${c})}">remaining</span>
+            </div>
+            <div th:replace="~{fragments/common :: slaMeter(${c})}"></div>
+            <a th:href="@{'/agent/complaints/' + ${c.id}}" class="btn btn-sm btn-soft">
+                Open complaint <i class="bi bi-arrow-right"></i>
+            </a>
+        </article>
+    </div>
+</div>
+
+</body>
+</html>

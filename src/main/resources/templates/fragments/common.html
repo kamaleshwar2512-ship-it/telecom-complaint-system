@@ -3,77 +3,263 @@
 <head><title>fragments</title></head>
 <body>
 
-<!--/* Bootstrap, Chart.js and our own stylesheet - included at the top of every page's <head>. */-->
+<!--/*
+  ============================================================================
+  Shared UI building blocks for the whole application.
+
+  Every page pulls its chrome (head imports, navbar, alerts, footer, scripts)
+  and its reusable components (badges, SLA indicators, timeline, empty states)
+  from here, so the visual language stays identical everywhere and there is
+  exactly one place to change it.
+  ============================================================================
+*/-->
+
+
+<!--/* ---------------------------------------------------------------------
+  head-imports : fonts, icons, Bootstrap and the application design system.
+  ---------------------------------------------------------------------- */-->
 <th:block th:fragment="head-imports">
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+    <meta name="theme-color" content="#0a1f44"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
+    <link rel="stylesheet" th:href="@{/css/app.css}"/>
 </th:block>
 
-<!--/* Shared responsive navbar. Which links appear depends on the logged-in user's role. */-->
-<nav th:fragment="navbar" class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
-    <div class="container-fluid">
-        <a class="navbar-brand" th:href="@{/}">Telecom Complaint &amp; SLA Tracker</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
-            <span class="navbar-toggler-icon"></span>
+
+<!--/* ---------------------------------------------------------------------
+  navbar(active) : role-aware top navigation.
+  Pass the current section key so the matching link gets the active state,
+  e.g. th:replace="~{fragments/common :: navbar('dashboard')}".
+  Every link is gated by sec:authorize, so a role only ever sees its own.
+  ---------------------------------------------------------------------- */-->
+<nav th:fragment="navbar(active)" class="app-navbar">
+    <div class="app-container">
+        <a class="navbar-brand" th:href="@{/}">
+            <span class="brand-mark"><i class="bi bi-broadcast-pin"></i></span>
+            <span class="brand-text">
+                <span class="brand-name">Telecom Care</span>
+                <span class="brand-sub">Complaint &amp; SLA Desk</span>
+            </span>
+        </a>
+
+        <button class="nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-list"></i>
         </button>
-        <div class="collapse navbar-collapse" id="navMenu">
-            <ul class="navbar-nav me-auto" sec:authorize="isAuthenticated()">
-                <li class="nav-item" sec:authorize="hasRole('CUSTOMER')">
-                    <a class="nav-link" th:href="@{/customer/dashboard}">Dashboard</a>
+
+        <div class="nav-collapse" data-nav-collapse>
+            <ul class="nav-links">
+                <li sec:authorize="hasRole('CUSTOMER')">
+                    <a class="nav-link" th:classappend="${active == 'dashboard'} ? 'active' : ''"
+                       th:href="@{/customer/dashboard}"><i class="bi bi-grid-1x2"></i> Dashboard</a>
                 </li>
-                <li class="nav-item" sec:authorize="hasRole('CUSTOMER')">
-                    <a class="nav-link" th:href="@{/customer/complaints}">My Complaints</a>
+                <li sec:authorize="hasRole('CUSTOMER')">
+                    <a class="nav-link" th:classappend="${active == 'complaints'} ? 'active' : ''"
+                       th:href="@{/customer/complaints}"><i class="bi bi-card-list"></i> My Complaints</a>
                 </li>
-                <li class="nav-item" sec:authorize="hasRole('CUSTOMER')">
-                    <a class="nav-link" th:href="@{/customer/complaints/new}">Raise Complaint</a>
+                <li sec:authorize="hasRole('CUSTOMER')">
+                    <a class="nav-link" th:classappend="${active == 'raise'} ? 'active' : ''"
+                       th:href="@{/customer/complaints/new}"><i class="bi bi-plus-circle"></i> Raise Complaint</a>
                 </li>
-                <li class="nav-item" sec:authorize="hasRole('AGENT')">
-                    <a class="nav-link" th:href="@{/agent/dashboard}">My Queue</a>
+
+                <li sec:authorize="hasRole('AGENT')">
+                    <a class="nav-link" th:classappend="${active == 'agent-dashboard'} ? 'active' : ''"
+                       th:href="@{/agent/dashboard}"><i class="bi bi-grid-1x2"></i> Dashboard</a>
                 </li>
-                <li class="nav-item" sec:authorize="hasRole('ADMIN')">
-                    <a class="nav-link" th:href="@{/admin/dashboard}">Dashboard</a>
+                <li sec:authorize="hasRole('AGENT')">
+                    <a class="nav-link" th:classappend="${active == 'queue'} ? 'active' : ''"
+                       th:href="@{/agent/dashboard(view='queue')}"><i class="bi bi-inboxes"></i> My Queue</a>
                 </li>
-                <li class="nav-item" sec:authorize="hasRole('ADMIN')">
-                    <a class="nav-link" th:href="@{/admin/complaints}">Complaints</a>
+
+                <li sec:authorize="hasRole('ADMIN')">
+                    <a class="nav-link" th:classappend="${active == 'admin-dashboard'} ? 'active' : ''"
+                       th:href="@{/admin/dashboard}"><i class="bi bi-grid-1x2"></i> Dashboard</a>
                 </li>
-                <li class="nav-item" sec:authorize="hasRole('ADMIN')">
-                    <a class="nav-link" th:href="@{/admin/sla-rules}">SLA Rules</a>
+                <li sec:authorize="hasRole('ADMIN')">
+                    <a class="nav-link" th:classappend="${active == 'admin-complaints'} ? 'active' : ''"
+                       th:href="@{/admin/complaints}"><i class="bi bi-card-list"></i> Complaints</a>
+                </li>
+                <li sec:authorize="hasRole('ADMIN')">
+                    <a class="nav-link" th:classappend="${active == 'admin-sla'} ? 'active' : ''"
+                       th:href="@{/admin/sla-rules}"><i class="bi bi-sliders2"></i> SLA Rules</a>
                 </li>
             </ul>
-            <ul class="navbar-nav">
-                <li class="nav-item" sec:authorize="isAuthenticated()">
-                    <span class="navbar-text text-light me-3" sec:authentication="name">user</span>
-                </li>
-                <li class="nav-item" sec:authorize="isAuthenticated()">
-                    <form th:action="@{/logout}" method="post" class="d-inline">
-                        <button type="submit" class="btn btn-outline-light btn-sm">Logout</button>
-                    </form>
-                </li>
-            </ul>
+
+            <div class="nav-right" sec:authorize="isAuthenticated()">
+                <span class="user-chip">
+                    <span class="user-avatar"
+                          th:text="${#strings.toUpperCase(#strings.substring(#authentication.name, 0, 1))}">U</span>
+                    <span class="user-meta">
+                        <span class="user-role" sec:authorize="hasRole('CUSTOMER')">Customer</span>
+                        <span class="user-role" sec:authorize="hasRole('AGENT')">Support Agent</span>
+                        <span class="user-role" sec:authorize="hasRole('ADMIN')">Administrator</span>
+                        <span class="user-email" sec:authentication="name">user@example.com</span>
+                    </span>
+                </span>
+                <form th:action="@{/logout}" method="post">
+                    <button type="submit" class="btn-logout"><i class="bi bi-box-arrow-right"></i> Logout</button>
+                </form>
+            </div>
         </div>
     </div>
 </nav>
 
-<!--/* Success/error flash message banners. Expects "successMessage" / "errorMessage" model attributes. */-->
+
+<!--/* ---------------------------------------------------------------------
+  alerts : flash banners driven by the "successMessage" / "errorMessage"
+  model attributes the controllers already set.
+  ---------------------------------------------------------------------- */-->
 <th:block th:fragment="alerts">
-    <div class="container-fluid" th:if="${successMessage}">
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <span th:text="${successMessage}">Success</span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill"></i>
+        <span th:text="${successMessage}">Success</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
-    <div class="container-fluid" th:if="${errorMessage}">
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <span th:text="${errorMessage}">Error</span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-octagon-fill"></i>
+        <span th:text="${errorMessage}">Error</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 </th:block>
 
+
+<!--/* ---------------------------------------------------------------------
+  pageHeader(eyebrow, title, description) : consistent page title block.
+  ---------------------------------------------------------------------- */-->
+<div th:fragment="pageHeader(eyebrow, title, description)" class="page-header">
+    <div class="page-header__text">
+        <div class="eyebrow" th:if="${eyebrow != null and eyebrow != ''}" th:text="${eyebrow}">Section</div>
+        <h1 th:text="${title}">Page title</h1>
+        <p th:if="${description != null and description != ''}" th:text="${description}">Description</p>
+    </div>
+</div>
+
+
+<!--/* ---------------------------------------------------------------------
+  Badges. Each maps an enum value onto a consistent visual token.
+  ---------------------------------------------------------------------- */-->
+<span th:fragment="statusBadge(status)" class="badge"
+      th:classappend="'badge-status-' + ${#strings.toLowerCase(status.name())}">
+    <th:block th:switch="${status.name()}">
+        <th:block th:case="'OPEN'"><i class="bi bi-envelope-open"></i> Open</th:block>
+        <th:block th:case="'IN_PROGRESS'"><i class="bi bi-arrow-repeat"></i> In Progress</th:block>
+        <th:block th:case="'ESCALATED'"><i class="bi bi-arrow-up-right-circle"></i> Escalated</th:block>
+        <th:block th:case="'RESOLVED'"><i class="bi bi-check-circle"></i> Resolved</th:block>
+        <th:block th:case="'CLOSED'"><i class="bi bi-archive"></i> Closed</th:block>
+        <th:block th:case="*" th:text="${status}">Status</th:block>
+    </th:block>
+</span>
+
+<span th:fragment="priorityBadge(priority)" class="badge"
+      th:classappend="'badge-priority-' + ${#strings.toLowerCase(priority.name())}">
+    <th:block th:switch="${priority.name()}">
+        <th:block th:case="'CRITICAL'"><i class="bi bi-exclamation-triangle-fill"></i> Critical</th:block>
+        <th:block th:case="'HIGH'"><i class="bi bi-chevron-double-up"></i> High</th:block>
+        <th:block th:case="'MEDIUM'"><i class="bi bi-dash-lg"></i> Medium</th:block>
+        <th:block th:case="'LOW'"><i class="bi bi-chevron-down"></i> Low</th:block>
+        <th:block th:case="*" th:text="${priority}">Priority</th:block>
+    </th:block>
+</span>
+
+<span th:fragment="categoryBadge(category)" class="badge badge-category">
+    <th:block th:switch="${category.name()}">
+        <th:block th:case="'NETWORK'"><i class="bi bi-broadcast"></i> Network</th:block>
+        <th:block th:case="'BILLING'"><i class="bi bi-receipt"></i> Billing</th:block>
+        <th:block th:case="'SIM'"><i class="bi bi-sim"></i> SIM</th:block>
+        <th:block th:case="'DATA'"><i class="bi bi-wifi"></i> Data</th:block>
+        <th:block th:case="'OTHER'"><i class="bi bi-three-dots"></i> Other</th:block>
+        <th:block th:case="*" th:text="${category}">Category</th:block>
+    </th:block>
+</span>
+
+
+<!--/* ---------------------------------------------------------------------
+  SLA indicators. The urgency level always comes from SlaDisplayService so
+  the colour on screen and the automatic escalation use the same rule, and
+  the state is always spelled out in words as well as colour.
+  ---------------------------------------------------------------------- */-->
+<span th:fragment="slaPill(complaint)" class="sla-pill"
+      th:classappend="'sla-' + ${@slaDisplayService.urgencyLevel(complaint)}">
+    <span class="sla-dot"></span>
+    <span th:text="${#strings.toUpperCase(@slaDisplayService.urgencyLabel(complaint))}">ON TRACK</span>
+</span>
+
+<!--/* Countdown text that keeps ticking client-side. */-->
+<span th:fragment="slaCountdown(complaint)" class="sla-countdown"
+      th:classappend="${@slaDisplayService.urgencyLevel(complaint) == 'red'} ? 'is-breached' : ''"
+      th:attr="data-sla-deadline=${complaint.slaDeadline},
+               data-sla-breached-text='Deadline passed',
+               data-sla-suffix=' remaining',
+               data-sla-settled=${(complaint.status.name() == 'RESOLVED' or complaint.status.name() == 'CLOSED') ? 'true' : null}"
+      th:text="${(complaint.status.name() == 'RESOLVED' or complaint.status.name() == 'CLOSED')
+                 ? 'Completed' : @slaDisplayService.remainingTime(complaint)}">time remaining</span>
+
+<!--/* Elapsed-time meter between creation and the SLA deadline. */-->
+<div th:fragment="slaMeter(complaint)" class="sla-meter"
+     th:classappend="'sla-meter--' + ${@slaDisplayService.urgencyLevel(complaint)}"
+     role="progressbar" aria-valuemin="0" aria-valuemax="100"
+     th:attr="data-meter='true',
+              data-start=${complaint.createdAt},
+              data-deadline=${complaint.slaDeadline},
+              data-settled=${(complaint.status.name() == 'RESOLVED' or complaint.status.name() == 'CLOSED') ? 'true' : null},
+              aria-label='SLA time elapsed'">
+    <span class="sla-meter__fill"></span>
+</div>
+
+
+<!--/* ---------------------------------------------------------------------
+  timeline(entries) : vertical activity feed for a complaint. System
+  entries (no agent) are visually distinguished from agent/admin entries.
+  ---------------------------------------------------------------------- */-->
+<ul th:fragment="timeline(entries)" class="timeline">
+    <li th:each="u, stat : ${entries}" class="timeline__item"
+        th:classappend="${stat.first} ? 'timeline__item--first' : (${u.agent != null} ? 'timeline__item--agent' : 'timeline__item--system')">
+        <span class="timeline__marker">
+            <i th:if="${stat.first}" class="bi bi-flag-fill"></i>
+            <i th:if="${!stat.first and u.agent != null}" class="bi bi-person-badge"></i>
+            <i th:if="${!stat.first and u.agent == null}" class="bi bi-gear-fill"></i>
+        </span>
+        <div class="timeline__head">
+            <span class="timeline__author" th:if="${u.agent != null}" th:text="${u.agent.name}">Agent</span>
+            <span class="chip-system" th:if="${u.agent == null}">System</span>
+            <span class="timeline__time" th:text="${#temporals.format(u.timestamp, 'dd MMM yyyy, HH:mm')}">13 Sep 2026, 19:38</span>
+        </div>
+        <p class="timeline__note" th:text="${u.note}">Update note</p>
+    </li>
+</ul>
+
+
+<!--/* ---------------------------------------------------------------------
+  emptyState(icon, title, message, actionText, actionUrl)
+  Pass actionText as '' to render without a call-to-action button.
+  ---------------------------------------------------------------------- */-->
+<div th:fragment="emptyState(icon, title, message, actionText, actionUrl)" class="empty-state">
+    <span class="empty-state__icon"><i th:class="'bi ' + ${icon}"></i></span>
+    <h3 th:text="${title}">Nothing here yet</h3>
+    <p th:text="${message}">There is nothing to show right now.</p>
+    <a th:if="${actionText != null and actionText != ''}" th:href="@{${actionUrl}}" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> <span th:text="${actionText}">Action</span>
+    </a>
+</div>
+
+
+<!--/* ---------------------------------------------------------------------
+  footer & scripts
+  ---------------------------------------------------------------------- */-->
+<footer th:fragment="footer" class="app-footer">
+    <div class="app-container d-flex flex-wrap justify-content-between gap-2">
+        <span>&copy; Telecom Care &mdash; Complaint &amp; SLA Tracking Platform</span>
+        <span>SLA monitoring runs automatically in the background</span>
+    </div>
+</footer>
+
 <th:block th:fragment="scripts">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/app.js}"></script>
 </th:block>
 
 </body>

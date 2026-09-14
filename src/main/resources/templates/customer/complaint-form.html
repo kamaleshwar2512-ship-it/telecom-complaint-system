@@ -1,60 +1,142 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Raise a Complaint - Telecom Complaint Tracker</title>
+    <title>Raise a Complaint - Telecom Care</title>
     <th:block th:replace="~{fragments/common :: head-imports}"></th:block>
 </head>
 <body>
-<nav th:replace="~{fragments/common :: navbar}"></nav>
-<div th:replace="~{fragments/common :: alerts}"></div>
+<nav th:replace="~{fragments/common :: navbar('raise')}"></nav>
 
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-body p-4">
-                    <h3 class="card-title mb-3">Raise a Complaint</h3>
+<main class="app-main">
+    <div class="app-container app-container--narrow">
 
-                    <div class="alert alert-danger" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+        <div th:replace="~{fragments/common :: alerts}"></div>
 
-                    <form th:action="@{/customer/complaints}" th:object="${complaintForm}" method="post">
-                        <div class="mb-3">
-                            <label class="form-label">Category</label>
-                            <select class="form-select" th:field="*{category}"
-                                    th:classappend="${#fields.hasErrors('category')} ? 'is-invalid'">
-                                <option value="">-- Select a category --</option>
-                                <option th:each="cat : ${T(com.kamaleshwar.telecom_complaint_system.entity.enums.ComplaintCategory).values()}"
-                                        th:value="${cat}" th:text="${cat}"></option>
-                            </select>
-                            <div class="invalid-feedback" th:if="${#fields.hasErrors('category')}" th:errors="*{category}"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Priority</label>
-                            <select class="form-select" th:field="*{priority}"
-                                    th:classappend="${#fields.hasErrors('priority')} ? 'is-invalid'">
-                                <option value="">-- Select a priority --</option>
-                                <option th:each="p : ${T(com.kamaleshwar.telecom_complaint_system.entity.enums.Priority).values()}"
-                                        th:value="${p}" th:text="${p}"></option>
-                            </select>
-                            <div class="invalid-feedback" th:if="${#fields.hasErrors('priority')}" th:errors="*{priority}"></div>
-                            <div class="form-text">How urgent is this issue for you? This affects how quickly it must be resolved.</div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Description</label>
-                            <textarea class="form-control" rows="5" th:field="*{description}"
-                                      th:classappend="${#fields.hasErrors('description')} ? 'is-invalid'"
-                                      placeholder="Describe the problem in detail..."></textarea>
-                            <div class="invalid-feedback" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></div>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Submit Complaint</button>
-                        <a th:href="@{/customer/complaints}" class="btn btn-outline-secondary">Cancel</a>
-                    </form>
-                </div>
+        <a th:href="@{/customer/complaints}" class="back-link"><i class="bi bi-arrow-left"></i> Back to my complaints</a>
+
+        <div class="page-header">
+            <div class="page-header__text">
+                <div class="eyebrow">New support request</div>
+                <h1>Raise a Complaint</h1>
+                <p>Tell us what went wrong and we will help resolve your issue. Every complaint is tracked against a guaranteed resolution deadline.</p>
             </div>
         </div>
-    </div>
-</div>
 
+        <div class="alert alert-danger" th:if="${errorMessage}">
+            <i class="bi bi-exclamation-octagon-fill"></i>
+            <span th:text="${errorMessage}">Error</span>
+        </div>
+
+        <form th:action="@{/customer/complaints}" th:object="${complaintForm}" method="post" novalidate>
+            <section class="panel">
+                <div class="panel-body">
+
+                    <!--/* ---------- 1. Issue information ---------- */-->
+                    <div class="form-section">
+                        <div class="form-section__head">
+                            <span class="form-section__step">1</span>
+                            <div>
+                                <div class="form-section__title">Issue information</div>
+                                <p class="form-section__sub">Which part of your service is affected?</p>
+                            </div>
+                        </div>
+                        <label class="form-label" for="category">Category</label>
+                        <select class="form-select" th:field="*{category}"
+                                th:classappend="${#fields.hasErrors('category')} ? 'is-invalid' : ''">
+                            <option value="">Select the type of issue</option>
+                            <option th:each="cat : ${T(com.kamaleshwar.telecom_complaint_system.entity.enums.ComplaintCategory).values()}"
+                                    th:value="${cat}"
+                                    th:text="${#strings.capitalize(#strings.toLowerCase(cat.name()))}"></option>
+                        </select>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('category')}" th:errors="*{category}"></div>
+                        <div class="form-text"><i class="bi bi-info-circle"></i> Choosing the right category routes your complaint to the specialists who handle it.</div>
+                    </div>
+
+                    <!--/* ---------- 2. Priority ---------- */-->
+                    <div class="form-section">
+                        <div class="form-section__head">
+                            <span class="form-section__step">2</span>
+                            <div>
+                                <div class="form-section__title">Priority</div>
+                                <p class="form-section__sub">How badly is this affecting you right now?</p>
+                            </div>
+                        </div>
+                        <label class="form-label" for="priority">Urgency</label>
+                        <select class="form-select" th:field="*{priority}"
+                                th:classappend="${#fields.hasErrors('priority')} ? 'is-invalid' : ''">
+                            <option value="">Select a priority</option>
+                            <option th:each="p : ${T(com.kamaleshwar.telecom_complaint_system.entity.enums.Priority).values()}"
+                                    th:value="${p}"
+                                    th:text="${#strings.capitalize(#strings.toLowerCase(p.name()))}"></option>
+                        </select>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('priority')}" th:errors="*{priority}"></div>
+                        <div class="form-text"><i class="bi bi-stopwatch"></i> Priority determines how quickly your complaint must be resolved.</div>
+                    </div>
+
+                    <!--/* ---------- 3. Description ---------- */-->
+                    <div class="form-section">
+                        <div class="form-section__head">
+                            <span class="form-section__step">3</span>
+                            <div>
+                                <div class="form-section__title">What happened?</div>
+                                <p class="form-section__sub">The more detail you give, the faster we can fix it.</p>
+                            </div>
+                        </div>
+                        <label class="form-label" for="description">Description</label>
+                        <textarea class="form-control" rows="6" th:field="*{description}"
+                                  th:classappend="${#fields.hasErrors('description')} ? 'is-invalid' : ''"
+                                  placeholder="For example: mobile data stopped working on 12 September, full signal but no connection, restarting the handset did not help."></textarea>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></div>
+                        <div class="d-flex justify-content-between gap-2 flex-wrap">
+                            <div class="form-text"><i class="bi bi-lightbulb"></i> Include when it started, what you already tried and any error messages.</div>
+                            <div class="form-text" data-count-for="description">0 characters</div>
+                        </div>
+                    </div>
+
+                    <!--/* ---------- 4. SLA information (real rules from the database) ---------- */-->
+                    <div class="form-section">
+                        <div class="form-section__head">
+                            <span class="form-section__step">4</span>
+                            <div>
+                                <div class="form-section__title">Your resolution target</div>
+                                <p class="form-section__sub">Based on the category and priority you selected.</p>
+                            </div>
+                        </div>
+
+                        <div class="sla-preview" data-sla-preview
+                             data-category-field="category" data-priority-field="priority">
+                            <span class="sla-preview__icon"><i class="bi bi-shield-check"></i></span>
+                            <div>
+                                <span class="t-label">Expected resolution target</span>
+                                <div class="sla-preview__value" data-sla-preview-value>Select a category and priority</div>
+                                <p class="t-helper mb-0" data-sla-preview-hint>We will show your guaranteed resolution target here.</p>
+                            </div>
+                        </div>
+
+                        <!--/* Resolution targets come straight from the configured SLA rules. */-->
+                        <div hidden>
+                            <span th:each="r : ${@slaRuleService.findAll()}" data-sla-rule
+                                  th:attr="data-category=${r.category.name()},
+                                           data-priority=${r.priority.name()},
+                                           data-hours=${r.resolutionHours}"></span>
+                        </div>
+                    </div>
+
+                    <!--/* ---------- 5. Submit ---------- */-->
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-send"></i> Submit complaint
+                        </button>
+                        <a th:href="@{/customer/complaints}" class="btn btn-secondary btn-lg">Cancel</a>
+                    </div>
+                </div>
+            </section>
+        </form>
+
+    </div>
+</main>
+
+<footer th:replace="~{fragments/common :: footer}"></footer>
 <th:block th:replace="~{fragments/common :: scripts}"></th:block>
 </body>
 </html>

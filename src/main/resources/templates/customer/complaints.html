@@ -1,55 +1,136 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>My Complaints - Telecom Complaint Tracker</title>
+    <title>My Complaints - Telecom Care</title>
     <th:block th:replace="~{fragments/common :: head-imports}"></th:block>
 </head>
 <body>
-<nav th:replace="~{fragments/common :: navbar}"></nav>
-<div th:replace="~{fragments/common :: alerts}"></div>
+<nav th:replace="~{fragments/common :: navbar('complaints')}"></nav>
 
-<div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="mb-0">My Complaints</h2>
-        <a th:href="@{/customer/complaints/new}" class="btn btn-primary">Raise a Complaint</a>
-    </div>
+<main class="app-main">
+    <div class="app-container">
 
-    <div class="card">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0 align-middle">
-                <thead class="table-light">
-                <tr>
-                    <th>ID</th>
-                    <th>Category</th>
-                    <th>Priority</th>
-                    <th>Status</th>
-                    <th>Created</th>
-                    <th>SLA Deadline</th>
-                    <th>Remaining</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:if="${#lists.isEmpty(complaints)}">
-                    <td colspan="7" class="text-center text-muted py-4">You haven't raised any complaints yet.</td>
-                </tr>
-                <tr th:each="c : ${complaints}">
-                    <td><a th:href="@{'/customer/complaints/' + ${c.id}}" th:text="'#' + ${c.id}">#1</a></td>
-                    <td th:text="${c.category}">CATEGORY</td>
-                    <td th:text="${c.priority}">PRIORITY</td>
-                    <td><span class="badge bg-secondary" th:text="${c.status}">STATUS</span></td>
-                    <td th:text="${#temporals.format(c.createdAt, 'dd MMM yyyy, HH:mm')}">date</td>
-                    <td th:text="${#temporals.format(c.slaDeadline, 'dd MMM yyyy, HH:mm')}">deadline</td>
-                    <td>
-                        <span class="badge sla-countdown" th:classappend="${@slaDisplayService.badgeClass(c)}"
-                              th:text="${@slaDisplayService.remainingTime(c)}">remaining</span>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
+        <div th:replace="~{fragments/common :: alerts}"></div>
+
+        <div class="page-header">
+            <div class="page-header__text">
+                <div class="eyebrow">Support requests</div>
+                <h1>My Complaints</h1>
+                <p>Every complaint you have raised, with its current status and SLA position.</p>
+            </div>
+            <div class="page-header__actions">
+                <a th:href="@{/customer/complaints/new}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Raise a complaint</a>
+            </div>
         </div>
-    </div>
-</div>
 
+        <div class="table-wrap" th:if="${!#lists.isEmpty(complaints)}">
+            <div class="toolbar">
+                <div class="search-field">
+                    <i class="bi bi-search"></i>
+                    <input type="search" placeholder="Search your complaints..." aria-label="Search complaints"
+                           data-search-input="#complaintRecords"
+                           data-search-count="#visibleCount"
+                           data-search-empty="#noMatches"/>
+                </div>
+                <span class="t-helper">
+                    Showing <b id="visibleCount" th:text="${#lists.size(complaints)}">0</b>
+                    of <b th:text="${#lists.size(complaints)}">0</b> complaints
+                </span>
+            </div>
+
+            <div id="complaintRecords">
+                <!--/* Desktop: modern data table */-->
+                <div class="table-scroll d-none d-lg-block">
+                    <table class="data-table">
+                        <thead>
+                        <tr>
+                            <th class="col-id">ID</th>
+                            <th>Issue</th>
+                            <th>Category</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>SLA</th>
+                            <th>Resolution deadline</th>
+                            <th class="col-actions"></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="c : ${complaints}" data-search-row
+                            th:classappend="${'row-flag-' + (@slaDisplayService.urgencyLevel(c) == 'red' ? 'red' : (@slaDisplayService.urgencyLevel(c) == 'amber' ? 'amber' : 'none'))}">
+                            <td><span class="cell-id" th:text="'#' + ${c.id}">#1</span></td>
+                            <td>
+                                <span class="cell-primary" th:text="${#strings.abbreviate(c.description, 58)}">Issue summary</span>
+                                <span class="cell-sub" th:text="'Raised ' + ${#temporals.format(c.createdAt, 'dd MMM yyyy, HH:mm')}">Raised 13 Sep</span>
+                            </td>
+                            <td><th:block th:replace="~{fragments/common :: categoryBadge(${c.category})}"></th:block></td>
+                            <td><th:block th:replace="~{fragments/common :: priorityBadge(${c.priority})}"></th:block></td>
+                            <td><th:block th:replace="~{fragments/common :: statusBadge(${c.status})}"></th:block></td>
+                            <td style="min-width: 190px;">
+                                <th:block th:replace="~{fragments/common :: slaPill(${c})}"></th:block>
+                                <div class="mt-1">
+                                    <span th:replace="~{fragments/common :: slaCountdown(${c})}">remaining</span>
+                                </div>
+                            </td>
+                            <td class="nowrap t-num" th:text="${#temporals.format(c.slaDeadline, 'dd MMM yyyy, HH:mm')}">16 Sep 2026</td>
+                            <td class="col-actions">
+                                <a th:href="@{'/customer/complaints/' + ${c.id}}" class="btn btn-sm btn-soft">
+                                    View <i class="bi bi-arrow-right"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!--/* Mobile & tablet: the same rows as scannable cards */-->
+                <div class="record-list d-lg-none p-3">
+                    <article class="record-card" th:each="c : ${complaints}" data-search-row>
+                        <div class="record-card__top">
+                            <span class="complaint-card__id" th:text="'#' + ${c.id}">#1</span>
+                            <th:block th:replace="~{fragments/common :: statusBadge(${c.status})}"></th:block>
+                        </div>
+                        <p class="t-body mb-0" th:text="${#strings.abbreviate(c.description, 110)}">Issue summary</p>
+                        <div class="complaint-card__tags">
+                            <th:block th:replace="~{fragments/common :: categoryBadge(${c.category})}"></th:block>
+                            <th:block th:replace="~{fragments/common :: priorityBadge(${c.priority})}"></th:block>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                            <th:block th:replace="~{fragments/common :: slaPill(${c})}"></th:block>
+                            <span th:replace="~{fragments/common :: slaCountdown(${c})}">remaining</span>
+                        </div>
+                        <div th:replace="~{fragments/common :: slaMeter(${c})}"></div>
+                        <div class="d-flex align-items-center justify-content-between gap-2">
+                            <span class="t-helper" th:text="'Due ' + ${#temporals.format(c.slaDeadline, 'dd MMM, HH:mm')}">Due 16 Sep</span>
+                            <a th:href="@{'/customer/complaints/' + ${c.id}}" class="btn btn-sm btn-soft">
+                                View details <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </div>
+                    </article>
+                </div>
+            </div>
+
+            <div id="noMatches" hidden>
+                <div th:replace="~{fragments/common :: emptyState(
+                        'bi-search',
+                        'No matching complaints',
+                        'No complaint matches your search. Try a different keyword, category or complaint number.',
+                        '', '')}"></div>
+            </div>
+        </div>
+
+        <div class="panel" th:if="${#lists.isEmpty(complaints)}">
+            <div th:replace="~{fragments/common :: emptyState(
+                    'bi-inbox',
+                    'No complaints yet',
+                    'You have not raised any complaints. Need help with your telecom service? Raise a complaint and we will track it against a resolution deadline.',
+                    'Raise a complaint',
+                    '/customer/complaints/new')}"></div>
+        </div>
+
+    </div>
+</main>
+
+<footer th:replace="~{fragments/common :: footer}"></footer>
 <th:block th:replace="~{fragments/common :: scripts}"></th:block>
 </body>
 </html>

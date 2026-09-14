@@ -1,47 +1,79 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Login - Telecom Complaint Tracker</title>
+    <title>Sign in - Telecom Care</title>
     <th:block th:replace="~{fragments/common :: head-imports}"></th:block>
 </head>
 <body>
-<div class="container">
-    <div class="row justify-content-center align-items-center" style="min-height: 90vh;">
-        <div class="col-md-5">
-            <div class="card">
-                <div class="card-body p-4">
-                    <h3 class="card-title mb-3 text-center">Telecom Complaint &amp; SLA Tracker</h3>
-                    <p class="text-muted text-center mb-4">Sign in to continue</p>
+<div class="auth-shell">
 
-                    <div class="alert alert-success" th:if="${registered}">Registration successful. Please log in.</div>
-                    <div class="alert alert-success" th:if="${param.logout}">You have been logged out.</div>
-                    <div class="alert alert-danger" th:if="${param.error}">Invalid email or password.</div>
+    <aside class="auth-aside">
+        <div class="auth-aside__brand">
+            <span class="brand-mark"><i class="bi bi-broadcast-pin"></i></span>
+            <span class="brand-text">
+                <span class="brand-name">Telecom Care</span>
+                <span class="brand-sub">Complaint &amp; SLA Desk</span>
+            </span>
+        </div>
+        <h2>Every complaint, tracked to its deadline.</h2>
+        <p>Raise an issue, watch it move through our support team, and see exactly how long we have left to resolve it.</p>
+        <ul class="auth-points">
+            <li><i class="bi bi-check-circle-fill"></i> <span>Live SLA countdown on every complaint</span></li>
+            <li><i class="bi bi-check-circle-fill"></i> <span>Automatic escalation before a deadline is missed</span></li>
+            <li><i class="bi bi-check-circle-fill"></i> <span>A full activity timeline for each case</span></li>
+        </ul>
+    </aside>
 
-                    <form th:action="@{/login}" method="post">
-                        <div class="mb-3">
-                            <label for="username" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="username" name="username" required autofocus/>
-                        </div>
-                        <div class="mb-3">
-                            <label for="password" class="form-label">Password</label>
-                            <input type="password" class="form-control" id="password" name="password" required/>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Log In</button>
-                    </form>
+    <div class="auth-main">
+        <div class="auth-card">
+            <h1>Sign in</h1>
+            <p>Welcome back. Sign in to raise and track support complaints.</p>
 
-                    <p class="text-center mt-3 mb-0">
-                        New customer? <a th:href="@{/register}">Create an account</a>
-                    </p>
+            <div class="alert alert-success" th:if="${registered}">
+                <i class="bi bi-check-circle-fill"></i>
+                <span>Registration successful. Please sign in.</span>
+            </div>
+            <div class="alert alert-info" th:if="${param.logout}">
+                <i class="bi bi-info-circle-fill"></i>
+                <span>You have been signed out.</span>
+            </div>
+            <div class="alert alert-danger" th:if="${param.error}">
+                <i class="bi bi-exclamation-octagon-fill"></i>
+                <span>Invalid email or password.</span>
+            </div>
 
-                    <hr/>
-                    <p class="small text-muted mb-0">
-                        Demo accounts (password <code>Password123</code>): <br/>
-                        admin@telecom.com &middot; agent1@telecom.com &middot; customer1@telecom.com
-                    </p>
+            <form th:action="@{/login}" method="post">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Email address</label>
+                    <input type="email" class="form-control" id="username" name="username"
+                           placeholder="you@example.com" required autofocus/>
                 </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="password" name="password"
+                           placeholder="Enter your password" required/>
+                </div>
+                <button type="submit" class="btn btn-primary btn-lg w-100">
+                    <i class="bi bi-box-arrow-in-right"></i> Sign in
+                </button>
+            </form>
+
+            <p class="t-meta text-center mt-3 mb-0">
+                New customer? <a th:href="@{/register}">Create an account</a>
+            </p>
+
+            <div class="demo-accounts">
+                <span class="t-label">Demo accounts &mdash; password <b>Password123</b></span>
+                <ul class="demo-accounts__list">
+                    <li><b>Administrator</b> <span>admin@telecom.com</span></li>
+                    <li><b>Support agent</b> <span>agent1@telecom.com</span></li>
+                    <li><b>Customer</b> <span>customer1@telecom.com</span></li>
+                </ul>
             </div>
         </div>
     </div>
+
 </div>
+<th:block th:replace="~{fragments/common :: scripts}"></th:block>
 </body>
 </html>

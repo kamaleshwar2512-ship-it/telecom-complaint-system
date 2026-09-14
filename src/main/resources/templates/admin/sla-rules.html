@@ -1,46 +1,99 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>SLA Rules - Telecom Complaint Tracker</title>
+    <title>SLA Rules - Telecom Care</title>
     <th:block th:replace="~{fragments/common :: head-imports}"></th:block>
 </head>
 <body>
-<nav th:replace="~{fragments/common :: navbar}"></nav>
-<div th:replace="~{fragments/common :: alerts}"></div>
+<nav th:replace="~{fragments/common :: navbar('admin-sla')}"></nav>
 
-<div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="mb-0">SLA Rules</h2>
-        <a th:href="@{/admin/sla-rules/new}" class="btn btn-primary">Add Rule</a>
-    </div>
+<main class="app-main">
+    <div class="app-container">
 
-    <div class="card">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0 align-middle">
-                <thead class="table-light">
-                <tr>
-                    <th>Category</th>
-                    <th>Priority</th>
-                    <th>Resolution Time (hours)</th>
-                    <th></th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:if="${#lists.isEmpty(rules)}">
-                    <td colspan="4" class="text-center text-muted py-4">No SLA rules configured yet.</td>
-                </tr>
-                <tr th:each="r : ${rules}">
-                    <td th:text="${r.category}">CATEGORY</td>
-                    <td th:text="${r.priority}">PRIORITY</td>
-                    <td th:text="${r.resolutionHours}">24</td>
-                    <td><a th:href="@{'/admin/sla-rules/' + ${r.id} + '/edit'}" class="btn btn-sm btn-outline-secondary">Edit</a></td>
-                </tr>
-                </tbody>
-            </table>
+        <div th:replace="~{fragments/common :: alerts}"></div>
+
+        <div class="page-header">
+            <div class="page-header__text">
+                <div class="eyebrow">Service levels</div>
+                <h1>SLA Rules</h1>
+                <p>Configure resolution targets based on complaint category and priority. New complaints inherit the matching rule at the moment they are raised.</p>
+            </div>
+            <div class="page-header__actions">
+                <a th:href="@{/admin/sla-rules/new}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Add SLA rule</a>
+            </div>
         </div>
-    </div>
-</div>
 
+        <div class="table-wrap" th:if="${!#lists.isEmpty(rules)}">
+            <div class="toolbar">
+                <div class="panel-header__title"><i class="bi bi-stopwatch"></i> Configured targets</div>
+                <span class="badge badge-count" th:text="${#lists.size(rules)} + ' rules'">16 rules</span>
+            </div>
+
+            <div class="table-scroll d-none d-md-block">
+                <table class="data-table">
+                    <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Priority</th>
+                        <th>Resolution target</th>
+                        <th>Equivalent</th>
+                        <th class="col-actions"></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="r : ${rules}">
+                        <td><th:block th:replace="~{fragments/common :: categoryBadge(${r.category})}"></th:block></td>
+                        <td><th:block th:replace="~{fragments/common :: priorityBadge(${r.priority})}"></th:block></td>
+                        <td>
+                            <span class="cell-primary t-num" style="font-size: 1.0625rem; font-weight: 680;"
+                                  th:text="${r.resolutionHours} + (${r.resolutionHours == 1} ? ' hour' : ' hours')">24 hours</span>
+                        </td>
+                        <td class="t-meta">
+                            <span th:if="${r.resolutionHours &lt; 24}">Same day</span>
+                            <span th:if="${r.resolutionHours &gt;= 24}"
+                                  th:text="'about ' + ${r.resolutionHours / 24} + (${r.resolutionHours / 24 == 1} ? ' day' : ' days')">about 1 day</span>
+                        </td>
+                        <td class="col-actions">
+                            <a th:href="@{'/admin/sla-rules/' + ${r.id} + '/edit'}" class="btn btn-sm btn-secondary">
+                                <i class="bi bi-pencil"></i> Edit
+                            </a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="record-list d-md-none p-3">
+                <article class="record-card" th:each="r : ${rules}">
+                    <div class="record-card__top">
+                        <th:block th:replace="~{fragments/common :: categoryBadge(${r.category})}"></th:block>
+                        <th:block th:replace="~{fragments/common :: priorityBadge(${r.priority})}"></th:block>
+                    </div>
+                    <div class="kv-row">
+                        <span class="t-meta">Resolution target</span>
+                        <span class="t-num" style="font-size: 1.0625rem; font-weight: 680;"
+                              th:text="${r.resolutionHours} + ' hours'">24 hours</span>
+                    </div>
+                    <a th:href="@{'/admin/sla-rules/' + ${r.id} + '/edit'}" class="btn btn-sm btn-secondary">
+                        <i class="bi bi-pencil"></i> Edit rule
+                    </a>
+                </article>
+            </div>
+        </div>
+
+        <div class="panel" th:if="${#lists.isEmpty(rules)}">
+            <div th:replace="~{fragments/common :: emptyState(
+                    'bi-sliders2',
+                    'No SLA rules configured',
+                    'Complaints need a matching category and priority rule before a resolution deadline can be calculated. Add your first rule to get started.',
+                    'Add SLA rule',
+                    '/admin/sla-rules/new')}"></div>
+        </div>
+
+    </div>
+</main>
+
+<footer th:replace="~{fragments/common :: footer}"></footer>
 <th:block th:replace="~{fragments/common :: scripts}"></th:block>
 </body>
 </html>

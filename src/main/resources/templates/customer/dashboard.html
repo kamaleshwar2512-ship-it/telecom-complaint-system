@@ -1,85 +1,201 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="https://www.thymeleaf.org/extras/spring-security">
 <head>
-    <title>My Dashboard - Telecom Complaint Tracker</title>
+    <title>Dashboard - Telecom Care</title>
     <th:block th:replace="~{fragments/common :: head-imports}"></th:block>
 </head>
 <body>
-<nav th:replace="~{fragments/common :: navbar}"></nav>
-<div th:replace="~{fragments/common :: alerts}"></div>
+<nav th:replace="~{fragments/common :: navbar('dashboard')}"></nav>
 
-<div class="container">
-    <h2 class="mb-4">My Dashboard</h2>
+<main class="app-main"
+      th:with="displayName=${#lists.isEmpty(complaints)
+                              ? #strings.capitalize(#strings.substringBefore(#authentication.name, '@'))
+                              : complaints[0].customer.name},
+               hourOfDay=${T(java.time.LocalTime).now().getHour()},
+               attention=${complaints.?[breached or status.name() == 'ESCALATED']}">
+    <div class="app-container">
 
-    <div class="row g-3 mb-4">
-        <div class="col-md-3 col-6">
-            <div class="card stat-card text-center p-3">
-                <div class="text-muted small">Total Complaints</div>
-                <div class="display-6" th:text="${totalComplaints}">0</div>
+        <div th:replace="~{fragments/common :: alerts}"></div>
+
+        <!--/* ---------- Welcome header ---------- */-->
+        <div class="page-header">
+            <div class="page-header__text">
+                <h1 th:text="${(hourOfDay &lt; 12 ? 'Good morning' : (hourOfDay &lt; 17 ? 'Good afternoon' : 'Good evening')) + ', ' + displayName}">
+                    Good morning
+                </h1>
+                <p>Here's an overview of your support requests and their current status.</p>
+            </div>
+            <div class="page-header__actions">
+                <a th:href="@{/customer/complaints}" class="btn btn-secondary"><i class="bi bi-card-list"></i> All complaints</a>
+                <a th:href="@{/customer/complaints/new}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Raise a complaint</a>
             </div>
         </div>
-        <div class="col-md-3 col-6">
-            <div class="card stat-card text-center p-3">
-                <div class="text-muted small">Open / In Progress</div>
-                <div class="display-6 text-primary" th:text="${openCount}">0</div>
+
+        <!--/* ---------- Summary statistics ---------- */-->
+        <div class="stat-grid">
+            <div class="stat-card stat-card--neutral">
+                <div class="stat-card__top">
+                    <span class="t-label">Total complaints</span>
+                    <span class="stat-card__icon"><i class="bi bi-collection"></i></span>
+                </div>
+                <div class="stat-card__value" th:text="${totalComplaints}">0</div>
+                <p class="stat-card__hint">All requests you have raised</p>
+            </div>
+
+            <div class="stat-card stat-card--primary">
+                <div class="stat-card__top">
+                    <span class="t-label">Active</span>
+                    <span class="stat-card__icon"><i class="bi bi-arrow-repeat"></i></span>
+                </div>
+                <div class="stat-card__value" th:text="${openCount}">0</div>
+                <p class="stat-card__hint">Currently being handled</p>
+            </div>
+
+            <div class="stat-card stat-card--warning">
+                <div class="stat-card__top">
+                    <span class="t-label">Escalated</span>
+                    <span class="stat-card__icon"><i class="bi bi-arrow-up-right-circle"></i></span>
+                </div>
+                <div class="stat-card__value" th:text="${escalatedCount}">0</div>
+                <p class="stat-card__hint">Requires additional attention</p>
+            </div>
+
+            <div class="stat-card stat-card--success">
+                <div class="stat-card__top">
+                    <span class="t-label">Resolved</span>
+                    <span class="stat-card__icon"><i class="bi bi-check2-circle"></i></span>
+                </div>
+                <div class="stat-card__value" th:text="${resolvedCount}">0</div>
+                <p class="stat-card__hint">Successfully completed</p>
             </div>
         </div>
-        <div class="col-md-3 col-6">
-            <div class="card stat-card text-center p-3">
-                <div class="text-muted small">Escalated</div>
-                <div class="display-6 text-warning" th:text="${escalatedCount}">0</div>
+
+        <!--/* ---------- Attention panel (real data, never hard-coded) ---------- */-->
+        <div class="mt-4">
+            <div class="attention attention--danger" th:if="${!#lists.isEmpty(attention)}">
+                <span class="attention__icon"><i class="bi bi-exclamation-triangle-fill"></i></span>
+                <div class="attention__body">
+                    <h2 class="attention__title">SLA attention required</h2>
+                    <p class="attention__text">
+                        <span th:text="${#lists.size(attention) == 1
+                                         ? 'One of your complaints needs attention.'
+                                         : #lists.size(attention) + ' of your complaints need attention.'}">
+                            One of your complaints needs attention.
+                        </span>
+                        Our support team has been notified and is prioritising them.
+                    </p>
+                    <ul class="attention__list">
+                        <li class="attention__row" th:each="c : ${attention}">
+                            <span>
+                                <strong th:text="'Complaint #' + ${c.id}">Complaint #2</strong>
+                                <span class="t-meta" th:if="${c.breached}"> has exceeded its resolution deadline.</span>
+                                <span class="t-meta" th:unless="${c.breached}"> has been escalated for further attention.</span>
+                            </span>
+                            <a th:href="@{'/customer/complaints/' + ${c.id}}" class="btn btn-sm btn-soft-danger">
+                                View complaint <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="attention attention--success" th:if="${#lists.isEmpty(attention)}">
+                <span class="attention__icon"><i class="bi bi-check-circle-fill"></i></span>
+                <div class="attention__body">
+                    <h2 class="attention__title">Everything is on track</h2>
+                    <p class="attention__text">You currently have no complaints requiring immediate attention.</p>
+                </div>
             </div>
         </div>
-        <div class="col-md-3 col-6">
-            <div class="card stat-card text-center p-3">
-                <div class="text-muted small">Resolved / Closed</div>
-                <div class="display-6 text-success" th:text="${resolvedCount}">0</div>
+
+        <!--/* ---------- Recent complaints as rich cards ---------- */-->
+        <div class="mt-4">
+            <div class="section-heading">
+                <div>
+                    <h2><i class="bi bi-clock-history"></i> Recent complaints</h2>
+                    <p class="t-helper">Your most recently raised requests and where they stand.</p>
+                </div>
+                <a th:href="@{/customer/complaints}" class="btn btn-sm btn-secondary" th:if="${!#lists.isEmpty(complaints)}">
+                    View all <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+
+            <div class="panel" th:if="${#lists.isEmpty(complaints)}">
+                <div th:replace="~{fragments/common :: emptyState(
+                        'bi-inbox',
+                        'No complaints yet',
+                        'You have not raised any complaints yet. Need help with your telecom service? Tell us what went wrong and we will track it against a resolution deadline.',
+                        'Raise a complaint',
+                        '/customer/complaints/new')}"></div>
+            </div>
+
+            <div class="card-grid" th:unless="${#lists.isEmpty(complaints)}">
+                <article class="complaint-card" th:each="c : ${complaints}"
+                         th:with="tl=${@complaintUpdateService.timelineFor(c)}">
+
+                    <header class="complaint-card__head">
+                        <div class="d-flex align-items-start gap-2">
+                            <span class="complaint-card__id" th:text="'#' + ${c.id}">#1</span>
+                            <h3 class="complaint-card__title" th:text="${#strings.abbreviate(c.description, 72)}">
+                                Mobile data connectivity
+                            </h3>
+                        </div>
+                        <div class="complaint-card__tags">
+                            <th:block th:replace="~{fragments/common :: categoryBadge(${c.category})}"></th:block>
+                            <th:block th:replace="~{fragments/common :: priorityBadge(${c.priority})}"></th:block>
+                            <th:block th:replace="~{fragments/common :: statusBadge(${c.status})}"></th:block>
+                        </div>
+                    </header>
+
+                    <div class="complaint-card__sla">
+                        <div class="complaint-card__sla-top">
+                            <span class="t-label">SLA status</span>
+                            <th:block th:replace="~{fragments/common :: slaPill(${c})}"></th:block>
+                        </div>
+                        <div class="d-flex align-items-baseline justify-content-between gap-2">
+                            <span th:replace="~{fragments/common :: slaCountdown(${c})}">56h 55m remaining</span>
+                        </div>
+                        <div th:replace="~{fragments/common :: slaMeter(${c})}"></div>
+                    </div>
+
+                    <div class="complaint-card__body">
+                        <div>
+                            <div class="kv-row">
+                                <span class="t-meta">Created</span>
+                                <span class="t-value t-num" th:text="${#temporals.format(c.createdAt, 'dd MMM yyyy, HH:mm')}">13 Sep 2026, 19:38</span>
+                            </div>
+                            <div class="kv-row">
+                                <span class="t-meta">Resolution deadline</span>
+                                <span class="t-value t-num" th:text="${#temporals.format(c.slaDeadline, 'dd MMM yyyy, HH:mm')}">16 Sep 2026, 19:38</span>
+                            </div>
+                            <div class="kv-row" th:if="${c.assignedAgent != null}">
+                                <span class="t-meta">Handled by</span>
+                                <span class="t-value" th:text="${c.assignedAgent.name}">Raj Agent</span>
+                            </div>
+                        </div>
+
+                        <div class="latest-update" th:if="${!#lists.isEmpty(tl)}">
+                            <span class="t-label">Latest update</span>
+                            <p th:text="${tl[#lists.size(tl) - 1].note}">Your complaint has been registered.</p>
+                        </div>
+                    </div>
+
+                    <footer class="complaint-card__foot">
+                        <span class="t-helper" th:if="${!#lists.isEmpty(tl)}"
+                              th:text="${#temporals.format(tl[#lists.size(tl) - 1].timestamp, 'dd MMM, HH:mm')}">13 Sep, 19:38</span>
+                        <span class="t-helper" th:if="${#lists.isEmpty(tl)}">No updates yet</span>
+                        <a th:href="@{'/customer/complaints/' + ${c.id}}" class="btn btn-sm btn-soft">
+                            View details <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </footer>
+                </article>
             </div>
         </div>
+
     </div>
+</main>
 
-    <div class="d-flex justify-content-between align-items-center mb-2">
-        <h4 class="mb-0">Recent Complaints</h4>
-        <div>
-            <a th:href="@{/customer/complaints/new}" class="btn btn-primary btn-sm">Raise a Complaint</a>
-            <a th:href="@{/customer/complaints}" class="btn btn-outline-secondary btn-sm">View All</a>
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0 align-middle">
-                <thead class="table-light">
-                <tr>
-                    <th>ID</th>
-                    <th>Category</th>
-                    <th>Priority</th>
-                    <th>Status</th>
-                    <th>Created</th>
-                    <th>SLA Remaining</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:if="${#lists.isEmpty(complaints)}">
-                    <td colspan="6" class="text-center text-muted py-4">You haven't raised any complaints yet.</td>
-                </tr>
-                <tr th:each="c : ${complaints}">
-                    <td><a th:href="@{'/customer/complaints/' + ${c.id}}" th:text="'#' + ${c.id}">#1</a></td>
-                    <td th:text="${c.category}">CATEGORY</td>
-                    <td th:text="${c.priority}">PRIORITY</td>
-                    <td><span class="badge bg-secondary" th:text="${c.status}">STATUS</span></td>
-                    <td th:text="${#temporals.format(c.createdAt, 'dd MMM yyyy, HH:mm')}">date</td>
-                    <td>
-                        <span class="badge sla-countdown" th:classappend="${@slaDisplayService.badgeClass(c)}"
-                              th:text="${@slaDisplayService.remainingTime(c)}">remaining</span>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
+<footer th:replace="~{fragments/common :: footer}"></footer>
 <th:block th:replace="~{fragments/common :: scripts}"></th:block>
 </body>
 </html>

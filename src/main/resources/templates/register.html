@@ -1,55 +1,76 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Register - Telecom Complaint Tracker</title>
+    <title>Create an account - Telecom Care</title>
     <th:block th:replace="~{fragments/common :: head-imports}"></th:block>
 </head>
 <body>
-<div class="container">
-    <div class="row justify-content-center align-items-center" style="min-height: 90vh;">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body p-4">
-                    <h3 class="card-title mb-3 text-center">Create your account</h3>
-                    <p class="text-muted text-center mb-4">Register as a customer to raise and track complaints</p>
+<div class="auth-shell">
 
-                    <div class="alert alert-danger" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+    <aside class="auth-aside">
+        <div class="auth-aside__brand">
+            <span class="brand-mark"><i class="bi bi-broadcast-pin"></i></span>
+            <span class="brand-text">
+                <span class="brand-name">Telecom Care</span>
+                <span class="brand-sub">Complaint &amp; SLA Desk</span>
+            </span>
+        </div>
+        <h2>Support that comes with a deadline.</h2>
+        <p>Create a customer account to raise complaints and follow every step of the resolution, from registration to sign-off.</p>
+        <ul class="auth-points">
+            <li><i class="bi bi-check-circle-fill"></i> <span>Know exactly when your issue will be resolved</span></li>
+            <li><i class="bi bi-check-circle-fill"></i> <span>See who is working on it, and what they have done</span></li>
+            <li><i class="bi bi-check-circle-fill"></i> <span>Reopen a complaint if the problem comes back</span></li>
+        </ul>
+    </aside>
 
-                    <form th:action="@{/register}" th:object="${registrationForm}" method="post">
-                        <div class="mb-3">
-                            <label class="form-label">Full name</label>
-                            <input type="text" class="form-control" th:field="*{name}"
-                                   th:classappend="${#fields.hasErrors('name')} ? 'is-invalid'"/>
-                            <div class="invalid-feedback" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Email</label>
-                            <input type="email" class="form-control" th:field="*{email}"
-                                   th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'"/>
-                            <div class="invalid-feedback" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Phone (optional)</label>
-                            <input type="text" class="form-control" th:field="*{phone}"
-                                   th:classappend="${#fields.hasErrors('phone')} ? 'is-invalid'"/>
-                            <div class="invalid-feedback" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Password</label>
-                            <input type="password" class="form-control" th:field="*{password}"
-                                   th:classappend="${#fields.hasErrors('password')} ? 'is-invalid'"/>
-                            <div class="invalid-feedback" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Register</button>
-                    </form>
+    <div class="auth-main">
+        <div class="auth-card">
+            <h1>Create your account</h1>
+            <p>Register as a customer to raise and track complaints.</p>
 
-                    <p class="text-center mt-3 mb-0">
-                        Already have an account? <a th:href="@{/login}">Log in</a>
-                    </p>
-                </div>
+            <div class="alert alert-danger" th:if="${errorMessage}">
+                <i class="bi bi-exclamation-octagon-fill"></i>
+                <span th:text="${errorMessage}">Error</span>
             </div>
+
+            <form th:action="@{/register}" th:object="${registrationForm}" method="post" novalidate>
+                <div class="mb-3">
+                    <label class="form-label" for="name">Full name</label>
+                    <input type="text" class="form-control" th:field="*{name}" placeholder="Your full name"
+                           th:classappend="${#fields.hasErrors('name')} ? 'is-invalid' : ''"/>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="email">Email address</label>
+                    <input type="email" class="form-control" th:field="*{email}" placeholder="you@example.com"
+                           th:classappend="${#fields.hasErrors('email')} ? 'is-invalid' : ''"/>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="phone">Phone <span class="t-helper">(optional)</span></label>
+                    <input type="text" class="form-control" th:field="*{phone}" placeholder="Mobile number"
+                           th:classappend="${#fields.hasErrors('phone')} ? 'is-invalid' : ''"/>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}"></div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="password">Password</label>
+                    <input type="password" class="form-control" th:field="*{password}" placeholder="Choose a password"
+                           th:classappend="${#fields.hasErrors('password')} ? 'is-invalid' : ''"/>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-lg w-100">
+                    <i class="bi bi-person-plus"></i> Create account
+                </button>
+            </form>
+
+            <p class="t-meta text-center mt-3 mb-0">
+                Already have an account? <a th:href="@{/login}">Sign in</a>
+            </p>
         </div>
     </div>
+
 </div>
+<th:block th:replace="~{fragments/common :: scripts}"></th:block>
 </body>
 </html>

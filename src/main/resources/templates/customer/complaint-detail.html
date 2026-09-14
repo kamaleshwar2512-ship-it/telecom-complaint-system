@@ -1,73 +1,241 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title th:text="'Complaint #' + ${complaint.id} + ' - Telecom Complaint Tracker'">Complaint</title>
+    <title th:text="'Complaint #' + ${complaint.id} + ' - Telecom Care'">Complaint</title>
     <th:block th:replace="~{fragments/common :: head-imports}"></th:block>
 </head>
 <body>
-<nav th:replace="~{fragments/common :: navbar}"></nav>
-<div th:replace="~{fragments/common :: alerts}"></div>
+<nav th:replace="~{fragments/common :: navbar('complaints')}"></nav>
 
-<div class="container">
-    <div class="row">
-        <div class="col-lg-8">
-            <div class="card mb-4">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <h3 th:text="'Complaint #' + ${complaint.id}">Complaint #1</h3>
-                        <span class="badge fs-6" th:classappend="${@slaDisplayService.badgeClass(complaint)}"
-                              th:text="${@slaDisplayService.urgencyLabel(complaint)}">Status</span>
+<main class="app-main"
+      th:with="urgency=${@slaDisplayService.urgencyLevel(complaint)},
+               settled=${complaint.status.name() == 'RESOLVED' or complaint.status.name() == 'CLOSED'},
+               latest=${#lists.isEmpty(timeline) ? null : timeline[#lists.size(timeline) - 1]}">
+    <div class="app-container">
+
+        <div th:replace="~{fragments/common :: alerts}"></div>
+
+        <a th:href="@{/customer/complaints}" class="back-link"><i class="bi bi-arrow-left"></i> Back to my complaints</a>
+
+        <!--/* ---------- Case header ---------- */-->
+        <div class="page-header">
+            <div class="page-header__text">
+                <div class="eyebrow" th:text="'Complaint #' + ${complaint.id}">Complaint #1</div>
+                <h1 th:text="${#strings.abbreviate(complaint.description, 90)}">Mobile data connectivity</h1>
+                <div class="complaint-card__tags mt-2">
+                    <th:block th:replace="~{fragments/common :: statusBadge(${complaint.status})}"></th:block>
+                    <th:block th:replace="~{fragments/common :: priorityBadge(${complaint.priority})}"></th:block>
+                    <th:block th:replace="~{fragments/common :: categoryBadge(${complaint.category})}"></th:block>
+                </div>
+            </div>
+            <div class="page-header__actions">
+                <form th:if="${complaint.status.name() == 'RESOLVED'}"
+                      th:action="@{'/customer/complaints/' + ${complaint.id} + '/reopen'}" method="post">
+                    <button type="submit" class="btn btn-soft-warning">
+                        <i class="bi bi-arrow-counterclockwise"></i> Reopen complaint
+                    </button>
+                </form>
+                <a th:href="@{/customer/complaints/new}" class="btn btn-secondary">
+                    <i class="bi bi-plus-lg"></i> New complaint
+                </a>
+            </div>
+        </div>
+
+        <!--/* ---------- Breach / at-risk banner ---------- */-->
+        <div class="attention attention--danger mb-4" th:if="${urgency == 'red'}">
+            <span class="attention__icon"><i class="bi bi-exclamation-octagon-fill"></i></span>
+            <div class="attention__body">
+                <h2 class="attention__title">This complaint has passed its resolution deadline</h2>
+                <p class="attention__text">
+                    It was due by
+                    <b th:text="${#temporals.format(complaint.slaDeadline, 'dd MMM yyyy, HH:mm')}">16 Sep 2026</b>.
+                    Our support team has been alerted and this case is being prioritised.
+                </p>
+            </div>
+        </div>
+        <div class="attention attention--warning mb-4" th:if="${urgency == 'amber'}">
+            <span class="attention__icon"><i class="bi bi-clock-history"></i></span>
+            <div class="attention__body">
+                <h2 class="attention__title">Approaching the resolution deadline</h2>
+                <p class="attention__text">
+                    This complaint is close to its deadline of
+                    <b th:text="${#temporals.format(complaint.slaDeadline, 'dd MMM yyyy, HH:mm')}">16 Sep 2026</b>
+                    and has been flagged for priority handling.
+                </p>
+            </div>
+        </div>
+
+        <div class="row g-3">
+
+            <!--/* ================= Main column ================= */-->
+            <div class="col-lg-8">
+
+                <section class="panel mb-3">
+                    <div class="panel-header">
+                        <div class="panel-header__title"><i class="bi bi-file-text"></i> Complaint details</div>
                     </div>
-                    <dl class="row mt-3">
-                        <dt class="col-sm-3">Category</dt>
-                        <dd class="col-sm-9" th:text="${complaint.category}">CATEGORY</dd>
-                        <dt class="col-sm-3">Priority</dt>
-                        <dd class="col-sm-9" th:text="${complaint.priority}">PRIORITY</dd>
-                        <dt class="col-sm-3">Status</dt>
-                        <dd class="col-sm-9"><span class="badge bg-secondary" th:text="${complaint.status}">STATUS</span></dd>
-                        <dt class="col-sm-3">Description</dt>
-                        <dd class="col-sm-9" th:text="${complaint.description}">description</dd>
-                        <dt class="col-sm-3">Created</dt>
-                        <dd class="col-sm-9" th:text="${#temporals.format(complaint.createdAt, 'dd MMM yyyy, HH:mm')}">date</dd>
-                        <dt class="col-sm-3">SLA Deadline</dt>
-                        <dd class="col-sm-9" th:text="${#temporals.format(complaint.slaDeadline, 'dd MMM yyyy, HH:mm')}">deadline</dd>
-                        <dt class="col-sm-3">Remaining</dt>
-                        <dd class="col-sm-9">
-                            <span class="sla-countdown" th:attr="data-sla-deadline=${complaint.slaDeadline}"
-                                  th:text="${@slaDisplayService.remainingTime(complaint)}">remaining</span>
-                        </dd>
-                        <dt class="col-sm-3" th:if="${complaint.resolvedAt}">Resolved At</dt>
-                        <dd class="col-sm-9" th:if="${complaint.resolvedAt}" th:text="${#temporals.format(complaint.resolvedAt, 'dd MMM yyyy, HH:mm')}">resolved</dd>
-                        <dt class="col-sm-3" th:if="${complaint.assignedAgent}">Assigned Agent</dt>
-                        <dd class="col-sm-9" th:if="${complaint.assignedAgent}" th:text="${complaint.assignedAgent.name}">agent</dd>
-                    </dl>
+                    <div class="panel-body">
+                        <div class="detail-block mb-3">
+                            <span class="t-label">Description</span>
+                            <p class="t-body mt-1" th:text="${complaint.description}">Full description of the issue.</p>
+                        </div>
 
-                    <form th:if="${complaint.status.name() == 'RESOLVED'}" th:action="@{'/customer/complaints/' + ${complaint.id} + '/reopen'}" method="post">
-                        <button type="submit" class="btn btn-outline-warning">Reopen Complaint</button>
-                    </form>
-                </div>
+                        <dl class="detail-grid">
+                            <div class="detail-grid__item">
+                                <dt class="t-label">Reference</dt>
+                                <dd class="t-value t-num" th:text="'#' + ${complaint.id}">#1</dd>
+                            </div>
+                            <div class="detail-grid__item">
+                                <dt class="t-label">Category</dt>
+                                <dd><th:block th:replace="~{fragments/common :: categoryBadge(${complaint.category})}"></th:block></dd>
+                            </div>
+                            <div class="detail-grid__item">
+                                <dt class="t-label">Priority</dt>
+                                <dd><th:block th:replace="~{fragments/common :: priorityBadge(${complaint.priority})}"></th:block></dd>
+                            </div>
+                            <div class="detail-grid__item">
+                                <dt class="t-label">Status</dt>
+                                <dd><th:block th:replace="~{fragments/common :: statusBadge(${complaint.status})}"></th:block></dd>
+                            </div>
+                            <div class="detail-grid__item">
+                                <dt class="t-label">Created</dt>
+                                <dd class="t-value t-num" th:text="${#temporals.format(complaint.createdAt, 'dd MMM yyyy, HH:mm')}">13 Sep 2026, 19:38</dd>
+                            </div>
+                            <div class="detail-grid__item">
+                                <dt class="t-label">Resolution deadline</dt>
+                                <dd class="t-value t-num" th:text="${#temporals.format(complaint.slaDeadline, 'dd MMM yyyy, HH:mm')}">16 Sep 2026, 19:38</dd>
+                            </div>
+                            <div class="detail-grid__item">
+                                <dt class="t-label">Assigned agent</dt>
+                                <dd class="t-value" th:if="${complaint.assignedAgent != null}" th:text="${complaint.assignedAgent.name}">Raj Agent</dd>
+                                <dd class="t-value text-muted-app" th:if="${complaint.assignedAgent == null}">Awaiting assignment</dd>
+                            </div>
+                            <div class="detail-grid__item" th:if="${complaint.resolvedAt != null}">
+                                <dt class="t-label">Resolved at</dt>
+                                <dd class="t-value t-num" th:text="${#temporals.format(complaint.resolvedAt, 'dd MMM yyyy, HH:mm')}">15 Sep 2026, 11:02</dd>
+                            </div>
+                        </dl>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div class="panel-header__title"><i class="bi bi-list-ul"></i> Complaint progress</div>
+                        <span class="badge badge-count" th:text="${#lists.size(timeline)} + ' updates'">3 updates</span>
+                    </div>
+                    <div class="panel-body">
+                        <ul th:if="${!#lists.isEmpty(timeline)}"
+                            th:replace="~{fragments/common :: timeline(${timeline})}"></ul>
+                        <div th:if="${#lists.isEmpty(timeline)}"
+                             th:replace="~{fragments/common :: emptyState(
+                                'bi-hourglass',
+                                'No updates yet',
+                                'As soon as our support team picks up your complaint, every action will appear here.',
+                                '', '')}"></div>
+                    </div>
+                </section>
+            </div>
+
+            <!--/* ================= Sidebar ================= */-->
+            <div class="col-lg-4">
+
+                <!--/* SLA hero */-->
+                <section class="sla-hero mb-3" th:classappend="'sla-hero--' + ${urgency}">
+                    <div class="sla-hero__top">
+                        <div class="sla-hero__value" th:if="${!settled}"
+                             th:attr="data-sla-deadline=${complaint.slaDeadline}, data-sla-breached-text='Overdue'"
+                             th:text="${#strings.replace(@slaDisplayService.remainingTime(complaint), ' remaining', '')}">56h 55m</div>
+                        <div class="sla-hero__value" th:if="${settled}">Completed</div>
+                        <div class="sla-hero__caption" th:text="${settled} ? 'RESOLUTION DELIVERED' : 'REMAINING'">REMAINING</div>
+                    </div>
+                    <div class="sla-hero__body">
+                        <div class="d-flex align-items-center justify-content-between gap-2 mb-3">
+                            <span class="t-label">SLA status</span>
+                            <th:block th:replace="~{fragments/common :: slaPill(${complaint})}"></th:block>
+                        </div>
+                        <div th:replace="~{fragments/common :: slaMeter(${complaint})}"></div>
+                        <div class="kv-row mt-3">
+                            <span class="t-meta">Opened</span>
+                            <span class="t-value t-num" th:text="${#temporals.format(complaint.createdAt, 'dd MMM, HH:mm')}">13 Sep, 19:38</span>
+                        </div>
+                        <div class="kv-row">
+                            <span class="t-meta">Deadline</span>
+                            <span class="t-value t-num" th:text="${#temporals.format(complaint.slaDeadline, 'dd MMM, HH:mm')}">16 Sep, 19:38</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!--/* Latest update */-->
+                <section class="panel mb-3">
+                    <div class="panel-header">
+                        <div class="panel-header__title"><i class="bi bi-chat-left-dots"></i> Latest update</div>
+                    </div>
+                    <div class="panel-body">
+                        <div th:if="${latest != null}">
+                            <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                                <span class="timeline__author" th:if="${latest.agent != null}" th:text="${latest.agent.name}">Raj Agent</span>
+                                <span class="chip-system" th:if="${latest.agent == null}">System</span>
+                                <span class="timeline__time" th:text="${#temporals.format(latest.timestamp, 'dd MMM yyyy, HH:mm')}">14 Sep 2026, 09:15</span>
+                            </div>
+                            <p class="t-body mb-0" th:text="${latest.note}">Update text</p>
+                        </div>
+                        <p class="t-meta mb-0" th:if="${latest == null}">
+                            There are no updates on this complaint yet.
+                        </p>
+                    </div>
+                </section>
+
+                <!--/* What happens next - derived from the complaint's real status */-->
+                <section class="panel">
+                    <div class="panel-header">
+                        <div class="panel-header__title"><i class="bi bi-signpost-split"></i> What happens next?</div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="next-step">
+                            <span class="next-step__icon"><i class="bi bi-arrow-right-short"></i></span>
+                            <div>
+                                <th:block th:switch="${complaint.status.name()}">
+                                    <div th:case="'OPEN'">
+                                        <span class="t-card-title">Waiting for assignment</span>
+                                        <p>Your complaint is registered and queued for a support specialist. You will see an update here as soon as it is picked up.</p>
+                                    </div>
+                                    <div th:case="'IN_PROGRESS'">
+                                        <span class="t-card-title">Being investigated</span>
+                                        <p th:if="${complaint.assignedAgent != null}"
+                                           th:text="${complaint.assignedAgent.name} + ' is working on your complaint and will post progress updates here before the resolution deadline.'">
+                                            Agent is working on your complaint.
+                                        </p>
+                                        <p th:if="${complaint.assignedAgent == null}">Our support team is working on your complaint and will post progress updates here before the resolution deadline.</p>
+                                    </div>
+                                    <div th:case="'ESCALATED'">
+                                        <span class="t-card-title">Escalated for priority handling</span>
+                                        <p>This complaint has been escalated because of its SLA position. A senior support specialist is reviewing it and will update you here.</p>
+                                    </div>
+                                    <div th:case="'RESOLVED'">
+                                        <span class="t-card-title">Please review the resolution</span>
+                                        <p>Our team has marked this complaint as resolved. If the problem is still there, reopen the complaint and we will pick it straight back up.</p>
+                                    </div>
+                                    <div th:case="'CLOSED'">
+                                        <span class="t-card-title">This complaint is closed</span>
+                                        <p>No further action is needed. If you run into the same problem again, raise a new complaint and we will track it against a fresh deadline.</p>
+                                    </div>
+                                    <div th:case="*">
+                                        <span class="t-card-title">In progress</span>
+                                        <p>Our support team is handling this complaint. Updates will appear here.</p>
+                                    </div>
+                                </th:block>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
             </div>
         </div>
 
-        <div class="col-lg-4">
-            <div class="card">
-                <div class="card-header">Activity Timeline</div>
-                <div class="card-body">
-                    <ul class="timeline">
-                        <li th:each="u : ${timeline}">
-                            <div class="small text-muted" th:text="${#temporals.format(u.timestamp, 'dd MMM yyyy, HH:mm')}">date</div>
-                            <div th:text="${u.note}">note</div>
-                            <div class="small text-muted" th:if="${u.agent}" th:text="'by ' + ${u.agent.name}">agent</div>
-                            <div class="small text-muted fst-italic" th:unless="${u.agent}">system</div>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
     </div>
-</div>
+</main>
 
+<footer th:replace="~{fragments/common :: footer}"></footer>
 <th:block th:replace="~{fragments/common :: scripts}"></th:block>
-<script th:src="@{/js/countdown.js}"></script>
 </body>
 </html>

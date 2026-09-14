@@ -1,59 +1,102 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>SLA Rule - Telecom Complaint Tracker</title>
+    <title th:text="${slaRuleForm.id != null} ? 'Edit SLA Rule - Telecom Care' : 'Add SLA Rule - Telecom Care'">SLA Rule</title>
     <th:block th:replace="~{fragments/common :: head-imports}"></th:block>
 </head>
 <body>
-<nav th:replace="~{fragments/common :: navbar}"></nav>
-<div th:replace="~{fragments/common :: alerts}"></div>
+<nav th:replace="~{fragments/common :: navbar('admin-sla')}"></nav>
 
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body p-4">
-                    <h3 class="card-title mb-3" th:text="${slaRuleForm.id} != null ? 'Edit SLA Rule' : 'Add SLA Rule'">SLA Rule</h3>
+<main class="app-main">
+    <div class="app-container app-container--narrow">
 
-                    <div class="alert alert-danger" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+        <div th:replace="~{fragments/common :: alerts}"></div>
 
-                    <form th:action="@{/admin/sla-rules}" th:object="${slaRuleForm}" method="post">
-                        <input type="hidden" th:field="*{id}" th:if="${slaRuleForm.id != null}"/>
-                        <div class="mb-3">
-                            <label class="form-label">Category</label>
-                            <select class="form-select" th:field="*{category}"
-                                    th:classappend="${#fields.hasErrors('category')} ? 'is-invalid'">
-                                <option value="">-- Select a category --</option>
-                                <option th:each="cat : ${T(com.kamaleshwar.telecom_complaint_system.entity.enums.ComplaintCategory).values()}"
-                                        th:value="${cat}" th:text="${cat}"></option>
-                            </select>
-                            <div class="invalid-feedback" th:if="${#fields.hasErrors('category')}" th:errors="*{category}"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Priority</label>
-                            <select class="form-select" th:field="*{priority}"
-                                    th:classappend="${#fields.hasErrors('priority')} ? 'is-invalid'">
-                                <option value="">-- Select a priority --</option>
-                                <option th:each="p : ${T(com.kamaleshwar.telecom_complaint_system.entity.enums.Priority).values()}"
-                                        th:value="${p}" th:text="${p}"></option>
-                            </select>
-                            <div class="invalid-feedback" th:if="${#fields.hasErrors('priority')}" th:errors="*{priority}"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Resolution Time (hours)</label>
-                            <input type="number" min="1" class="form-control" th:field="*{resolutionHours}"
-                                   th:classappend="${#fields.hasErrors('resolutionHours')} ? 'is-invalid'"/>
-                            <div class="invalid-feedback" th:if="${#fields.hasErrors('resolutionHours')}" th:errors="*{resolutionHours}"></div>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Save</button>
-                        <a th:href="@{/admin/sla-rules}" class="btn btn-outline-secondary">Cancel</a>
-                    </form>
-                </div>
+        <a th:href="@{/admin/sla-rules}" class="back-link"><i class="bi bi-arrow-left"></i> Back to SLA rules</a>
+
+        <div class="page-header">
+            <div class="page-header__text">
+                <div class="eyebrow">Service levels</div>
+                <h1 th:text="${slaRuleForm.id != null} ? 'Edit SLA rule' : 'Add SLA rule'">SLA rule</h1>
+                <p>Set how many hours a complaint of this category and priority has to be resolved. One rule per category and priority combination.</p>
             </div>
         </div>
-    </div>
-</div>
 
+        <div class="alert alert-danger" th:if="${errorMessage}">
+            <i class="bi bi-exclamation-octagon-fill"></i>
+            <span th:text="${errorMessage}">Error</span>
+        </div>
+
+        <form th:action="@{/admin/sla-rules}" th:object="${slaRuleForm}" method="post" novalidate>
+            <input type="hidden" th:field="*{id}" th:if="${slaRuleForm.id != null}"/>
+
+            <section class="panel">
+                <div class="panel-body">
+
+                    <div class="form-section">
+                        <div class="form-section__head">
+                            <span class="form-section__step">1</span>
+                            <div>
+                                <div class="form-section__title">Applies to</div>
+                                <p class="form-section__sub">Which complaints this target covers.</p>
+                            </div>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label" for="category">Category</label>
+                                <select class="form-select" th:field="*{category}"
+                                        th:classappend="${#fields.hasErrors('category')} ? 'is-invalid' : ''">
+                                    <option value="">Select a category</option>
+                                    <option th:each="cat : ${T(com.kamaleshwar.telecom_complaint_system.entity.enums.ComplaintCategory).values()}"
+                                            th:value="${cat}"
+                                            th:text="${#strings.capitalize(#strings.toLowerCase(cat.name()))}"></option>
+                                </select>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('category')}" th:errors="*{category}"></div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="priority">Priority</label>
+                                <select class="form-select" th:field="*{priority}"
+                                        th:classappend="${#fields.hasErrors('priority')} ? 'is-invalid' : ''">
+                                    <option value="">Select a priority</option>
+                                    <option th:each="p : ${T(com.kamaleshwar.telecom_complaint_system.entity.enums.Priority).values()}"
+                                            th:value="${p}"
+                                            th:text="${#strings.capitalize(#strings.toLowerCase(p.name()))}"></option>
+                                </select>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('priority')}" th:errors="*{priority}"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="form-section__head">
+                            <span class="form-section__step">2</span>
+                            <div>
+                                <div class="form-section__title">Resolution target</div>
+                                <p class="form-section__sub">How long the team has, from the moment the complaint is raised.</p>
+                            </div>
+                        </div>
+
+                        <label class="form-label" for="resolutionHours">Resolution time (hours)</label>
+                        <input type="number" min="1" max="8760" class="form-control" th:field="*{resolutionHours}"
+                               th:classappend="${#fields.hasErrors('resolutionHours')} ? 'is-invalid' : ''"
+                               placeholder="e.g. 24"/>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('resolutionHours')}" th:errors="*{resolutionHours}"></div>
+                        <div class="form-text"><i class="bi bi-info-circle"></i> Between 1 and 8760 hours. Complaints are flagged as at risk before this deadline and escalated automatically when it is missed.</div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary btn-lg"><i class="bi bi-check-lg"></i> Save rule</button>
+                        <a th:href="@{/admin/sla-rules}" class="btn btn-secondary btn-lg">Cancel</a>
+                    </div>
+                </div>
+            </section>
+        </form>
+
+    </div>
+</main>
+
+<footer th:replace="~{fragments/common :: footer}"></footer>
 <th:block th:replace="~{fragments/common :: scripts}"></th:block>
 </body>
 </html>
