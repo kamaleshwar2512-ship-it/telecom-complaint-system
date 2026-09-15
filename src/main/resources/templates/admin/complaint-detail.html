@@ -93,14 +93,16 @@
                         <span class="badge badge-count" th:text="${#lists.size(timeline)} + ' entries'">3 entries</span>
                     </div>
                     <div class="panel-body">
-                        <ul th:if="${!#lists.isEmpty(timeline)}"
-                            th:replace="~{fragments/common :: timeline(${timeline})}"></ul>
-                        <div th:if="${#lists.isEmpty(timeline)}"
-                             th:replace="~{fragments/common :: emptyState(
-                                'bi-hourglass',
-                                'No activity yet',
-                                'Notes, status changes and automatic SLA events will appear here.',
-                                '', '')}"></div>
+                        <th:block th:if="${!#lists.isEmpty(timeline)}">
+                            <ul th:replace="~{fragments/common :: timeline(${timeline})}"></ul>
+                        </th:block>
+                        <th:block th:if="${#lists.isEmpty(timeline)}">
+                            <div th:replace="~{fragments/common :: emptyState(
+                                    'bi-hourglass',
+                                    'No activity yet',
+                                    'Notes, status changes and automatic SLA events will appear here.',
+                                    '', '')}"></div>
+                        </th:block>
                     </div>
                 </section>
             </div>

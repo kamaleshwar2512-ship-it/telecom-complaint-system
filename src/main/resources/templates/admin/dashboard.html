@@ -129,8 +129,9 @@
                         </div>
                         <div class="panel-body">
                             <div class="chart-box" th:if="${stats.totalComplaints > 0}"><canvas id="statusChart"></canvas></div>
-                            <div th:if="${stats.totalComplaints == 0}"
-                                 th:replace="~{fragments/common :: emptyState('bi-pie-chart', 'No data yet', 'Complaint status will be charted here once complaints are raised.', '', '')}"></div>
+                            <th:block th:if="${stats.totalComplaints == 0}">
+                                <div th:replace="~{fragments/common :: emptyState('bi-pie-chart', 'No data yet', 'Complaint status will be charted here once complaints are raised.', '', '')}"></div>
+                            </th:block>
                         </div>
                     </section>
                 </div>
@@ -145,8 +146,9 @@
                         </div>
                         <div class="panel-body">
                             <div class="chart-box" th:if="${stats.totalComplaints > 0}"><canvas id="categoryChart"></canvas></div>
-                            <div th:if="${stats.totalComplaints == 0}"
-                                 th:replace="~{fragments/common :: emptyState('bi-bar-chart', 'No data yet', 'Category volumes appear here once complaints are raised.', '', '')}"></div>
+                            <th:block th:if="${stats.totalComplaints == 0}">
+                                <div th:replace="~{fragments/common :: emptyState('bi-bar-chart', 'No data yet', 'Category volumes appear here once complaints are raised.', '', '')}"></div>
+                            </th:block>
                         </div>
                     </section>
                 </div>
@@ -161,8 +163,9 @@
                         </div>
                         <div class="panel-body">
                             <div class="chart-box" th:if="${stats.resolvedCount + stats.closedCount > 0}"><canvas id="resolutionChart"></canvas></div>
-                            <div th:if="${stats.resolvedCount + stats.closedCount == 0}"
-                                 th:replace="~{fragments/common :: emptyState('bi-speedometer', 'Nothing resolved yet', 'Average resolution times appear once complaints have been resolved.', '', '')}"></div>
+                            <th:block th:if="${stats.resolvedCount + stats.closedCount == 0}">
+                                <div th:replace="~{fragments/common :: emptyState('bi-speedometer', 'Nothing resolved yet', 'Average resolution times appear once complaints have been resolved.', '', '')}"></div>
+                            </th:block>
                         </div>
                     </section>
                 </div>
