@@ -214,10 +214,17 @@
 <!--/* ---------------------------------------------------------------------
   timeline(entries) : vertical activity feed for a complaint. System
   entries (no agent) are visually distinguished from agent/admin entries.
+
+  NOTE: the modifier is built as ONE literal-substitution (|...|) that
+  contains a single "__" sequence. Thymeleaf treats a PAIR of "__" inside an
+  expression as its preprocessing syntax (__${...}__), so spelling the three
+  BEM class names out in a ternary here would make the parser read
+  everything between the first and second "__" as an expression and fail
+  with "Could not parse as expression". Keep it to one "__" per expression.
   ---------------------------------------------------------------------- */-->
 <ul th:fragment="timeline(entries)" class="timeline">
     <li th:each="u, stat : ${entries}" class="timeline__item"
-        th:classappend="${stat.first} ? 'timeline__item--first' : (${u.agent != null} ? 'timeline__item--agent' : 'timeline__item--system')">
+        th:classappend="|timeline__item--${stat.first ? 'first' : (u.agent != null ? 'agent' : 'system')}|">
         <span class="timeline__marker">
             <i th:if="${stat.first}" class="bi bi-flag-fill"></i>
             <i th:if="${!stat.first and u.agent != null}" class="bi bi-person-badge"></i>

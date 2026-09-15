@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
  * Catches exceptions that individual controllers did not handle themselves and renders the
@@ -34,6 +35,17 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({InvalidStatusTransitionException.class, SlaRuleNotFoundException.class, InvalidAssignmentException.class})
     public ModelAndView handleBusinessRuleViolation(RuntimeException ex) {
         return errorView(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    /**
+     * A request for a static file that does not exist (most often the browser asking for
+     * /favicon.ico) is a plain 404, not an application failure. Handling it here keeps the
+     * generic handler below from logging a full stack trace for ordinary browser noise.
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ModelAndView handleMissingStaticResource(NoResourceFoundException ex) {
+        log.debug("No static resource for {}", ex.getResourcePath());
+        return errorView(HttpStatus.NOT_FOUND, "That page could not be found.");
     }
 
     @ExceptionHandler(Exception.class)
