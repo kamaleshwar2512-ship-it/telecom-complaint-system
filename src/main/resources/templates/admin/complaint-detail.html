@@ -43,7 +43,7 @@
                 <h2 class="attention__title">SLA breached</h2>
                 <p class="attention__text">
                     Deadline was
-                    <b th:text="${#temporals.format(complaint.slaDeadline, 'dd MMM yyyy, HH:mm')}">16 Sep 2026</b>.
+                    <b th:text="${#temporals.format(@slaDisplayService.currentDeadline(complaint), 'dd MMM yyyy, HH:mm')}">16 Sep 2026</b>.
                     Consider reassigning this case to an available agent.
                 </p>
             </div>
@@ -68,7 +68,7 @@
                             </div>
                             <div class="detail-grid__item">
                                 <dt class="t-label">SLA deadline</dt>
-                                <dd class="t-value t-num" th:text="${#temporals.format(complaint.slaDeadline, 'dd MMM yyyy, HH:mm')}">16 Sep 2026</dd>
+                                <dd class="t-value t-num" th:text="${#temporals.format(@slaDisplayService.currentDeadline(complaint), 'dd MMM yyyy, HH:mm')}">16 Sep 2026</dd>
                             </div>
                             <div class="detail-grid__item">
                                 <dt class="t-label">Time remaining</dt>

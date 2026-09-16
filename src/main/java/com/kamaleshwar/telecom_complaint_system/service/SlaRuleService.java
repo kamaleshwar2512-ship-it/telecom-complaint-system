@@ -11,14 +11,25 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 
-/** CRUD for the database-driven SLA rules that {@link ComplaintService} looks up when a complaint is created. */
+/**
+ * CRUD for the database-driven SLA rules that every complaint's SLA target is resolved from.
+ *
+ * <p>A rule is not a snapshot taken at complaint-creation time: {@link SlaEvaluationService} reads it
+ * on every SLA status calculation, so saving a rule here changes the target of every complaint
+ * matching its category/priority - the SLA badge and countdown on every screen follow immediately,
+ * with nothing to migrate. {@link #save(SlaRuleForm)} additionally asks {@link SlaMonitoringService}
+ * to re-evaluate the affected complaints straight away, so the stored breach markers behind the
+ * breach report and the dashboard counters agree with what those screens already show.
+ */
 @Service
 public class SlaRuleService {
 
     private final SlaRuleRepository slaRuleRepository;
+    private final SlaMonitoringService slaMonitoringService;
 
-    public SlaRuleService(SlaRuleRepository slaRuleRepository) {
+    public SlaRuleService(SlaRuleRepository slaRuleRepository, SlaMonitoringService slaMonitoringService) {
         this.slaRuleRepository = slaRuleRepository;
+        this.slaMonitoringService = slaMonitoringService;
     }
 
     public List<SlaRule> findAll() {
@@ -43,9 +54,21 @@ public class SlaRuleService {
                     "A rule for " + form.getCategory() + " / " + form.getPriority() + " already exists");
         }
 
+        ComplaintCategory previousCategory = rule.getCategory();
+        Priority previousPriority = rule.getPriority();
+
         rule.setCategory(form.getCategory());
         rule.setPriority(form.getPriority());
         rule.setResolutionHours(form.getResolutionHours());
-        return slaRuleRepository.save(rule);
+        SlaRule saved = slaRuleRepository.save(rule);
+
+        // The stored targets and breach markers of existing complaints are now out of date.
+        slaMonitoringService.recalculateForRule(saved.getCategory(), saved.getPriority());
+        if (previousCategory != null && previousPriority != null
+                && (previousCategory != saved.getCategory() || previousPriority != saved.getPriority())) {
+            // The rule was re-pointed at a different pair; complaints under the old pair lose it.
+            slaMonitoringService.recalculateForRule(previousCategory, previousPriority);
+        }
+        return saved;
     }
 }

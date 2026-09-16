@@ -166,7 +166,7 @@
                             </div>
                             <div class="kv-row">
                                 <span class="t-meta">Resolution deadline</span>
-                                <span class="t-value t-num" th:text="${#temporals.format(c.slaDeadline, 'dd MMM yyyy, HH:mm')}">16 Sep 2026, 19:38</span>
+                                <span class="t-value t-num" th:text="${#temporals.format(@slaDisplayService.currentDeadline(c), 'dd MMM yyyy, HH:mm')}">16 Sep 2026, 19:38</span>
                             </div>
                             <div class="kv-row" th:if="${c.assignedAgent != null}">
                                 <span class="t-meta">Handled by</span>

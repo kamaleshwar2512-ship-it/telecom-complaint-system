@@ -71,7 +71,7 @@
                                     <span th:replace="~{fragments/common :: slaCountdown(${c})}">remaining</span>
                                 </div>
                             </td>
-                            <td class="nowrap t-num" th:text="${#temporals.format(c.slaDeadline, 'dd MMM yyyy, HH:mm')}">16 Sep 2026</td>
+                            <td class="nowrap t-num" th:text="${#temporals.format(@slaDisplayService.currentDeadline(c), 'dd MMM yyyy, HH:mm')}">16 Sep 2026</td>
                             <td class="col-actions">
                                 <a th:href="@{'/customer/complaints/' + ${c.id}}" class="btn btn-sm btn-soft">
                                     View <i class="bi bi-arrow-right"></i>
@@ -100,7 +100,7 @@
                         </div>
                         <div th:replace="~{fragments/common :: slaMeter(${c})}"></div>
                         <div class="d-flex align-items-center justify-content-between gap-2">
-                            <span class="t-helper" th:text="'Due ' + ${#temporals.format(c.slaDeadline, 'dd MMM, HH:mm')}">Due 16 Sep</span>
+                            <span class="t-helper" th:text="'Due ' + ${#temporals.format(@slaDisplayService.currentDeadline(c), 'dd MMM, HH:mm')}">Due 16 Sep</span>
                             <a th:href="@{'/customer/complaints/' + ${c.id}}" class="btn btn-sm btn-soft">
                                 View details <i class="bi bi-arrow-right"></i>
                             </a>

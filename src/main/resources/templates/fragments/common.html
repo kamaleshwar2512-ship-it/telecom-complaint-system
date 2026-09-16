@@ -181,6 +181,15 @@
   SLA indicators. The urgency level always comes from SlaDisplayService so
   the colour on screen and the automatic escalation use the same rule, and
   the state is always spelled out in words as well as colour.
+
+  SlaDisplayService resolves the target live from the SLA rule that applies
+  right now, so a rule edit changes these badges immediately. The data-*
+  attributes below feed the client-side countdown and read complaint.slaDeadline
+  instead: that column is the mirror of the same calculation, rewritten by
+  SlaEvaluationService whenever a rule changes, so it carries the same value.
+  th:attr parses its value as a comma-separated assignation sequence and will
+  not accept a bean method call - keep service calls in single-expression
+  attributes such as th:text and th:classappend.
   ---------------------------------------------------------------------- */-->
 <span th:fragment="slaPill(complaint)" class="sla-pill"
       th:classappend="'sla-' + ${@slaDisplayService.urgencyLevel(complaint)}">

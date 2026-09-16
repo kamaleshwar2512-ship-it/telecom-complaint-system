@@ -46,24 +46,35 @@ public class ComplaintService {
     private final ComplaintRepository complaintRepository;
     private final UserRepository userRepository;
     private final SlaRuleService slaRuleService;
+    private final SlaEvaluationService slaEvaluationService;
     private final ComplaintUpdateService complaintUpdateService;
 
     public ComplaintService(ComplaintRepository complaintRepository, UserRepository userRepository,
-                             SlaRuleService slaRuleService, ComplaintUpdateService complaintUpdateService) {
+                             SlaRuleService slaRuleService, SlaEvaluationService slaEvaluationService,
+                             ComplaintUpdateService complaintUpdateService) {
         this.complaintRepository = complaintRepository;
         this.userRepository = userRepository;
         this.slaRuleService = slaRuleService;
+        this.slaEvaluationService = slaEvaluationService;
         this.complaintUpdateService = complaintUpdateService;
     }
 
-    /** Creates a complaint, looking up the matching SLA rule and calculating the deadline once, at creation time. */
+    /**
+     * Creates a complaint. The matching SLA rule must exist (a complaint with no SLA target would be
+     * untrackable), and the deadline it implies is cached on the new row via the same
+     * {@link SlaEvaluationService} formula every other SLA read uses.
+     *
+     * <p>That cached value is <em>not</em> a frozen copy of the target: it is refreshed whenever the
+     * rule changes, and SLA status is always recomputed from the rule in force at the time of the
+     * calculation. Editing this complaint's rule later moves its deadline with it.
+     */
     @Transactional
     public Complaint createComplaint(User customer, ComplaintForm form) {
         SlaRule rule = slaRuleService.findByCategoryAndPriority(form.getCategory(), form.getPriority())
                 .orElseThrow(() -> new SlaRuleNotFoundException(form.getCategory(), form.getPriority()));
 
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime deadline = now.plusHours(rule.getResolutionHours());
+        LocalDateTime deadline = slaEvaluationService.deadlineFrom(now, rule.getResolutionHours());
 
         Complaint complaint = new Complaint(customer, form.getCategory(), form.getDescription(),
                 form.getPriority(), now, deadline);

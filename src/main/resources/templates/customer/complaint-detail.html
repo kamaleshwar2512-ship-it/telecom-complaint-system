@@ -48,7 +48,7 @@
                 <h2 class="attention__title">This complaint has passed its resolution deadline</h2>
                 <p class="attention__text">
                     It was due by
-                    <b th:text="${#temporals.format(complaint.slaDeadline, 'dd MMM yyyy, HH:mm')}">16 Sep 2026</b>.
+                    <b th:text="${#temporals.format(@slaDisplayService.currentDeadline(complaint), 'dd MMM yyyy, HH:mm')}">16 Sep 2026</b>.
                     Our support team has been alerted and this case is being prioritised.
                 </p>
             </div>
@@ -59,7 +59,7 @@
                 <h2 class="attention__title">Approaching the resolution deadline</h2>
                 <p class="attention__text">
                     This complaint is close to its deadline of
-                    <b th:text="${#temporals.format(complaint.slaDeadline, 'dd MMM yyyy, HH:mm')}">16 Sep 2026</b>
+                    <b th:text="${#temporals.format(@slaDisplayService.currentDeadline(complaint), 'dd MMM yyyy, HH:mm')}">16 Sep 2026</b>
                     and has been flagged for priority handling.
                 </p>
             </div>
@@ -103,7 +103,7 @@
                             </div>
                             <div class="detail-grid__item">
                                 <dt class="t-label">Resolution deadline</dt>
-                                <dd class="t-value t-num" th:text="${#temporals.format(complaint.slaDeadline, 'dd MMM yyyy, HH:mm')}">16 Sep 2026, 19:38</dd>
+                                <dd class="t-value t-num" th:text="${#temporals.format(@slaDisplayService.currentDeadline(complaint), 'dd MMM yyyy, HH:mm')}">16 Sep 2026, 19:38</dd>
                             </div>
                             <div class="detail-grid__item">
                                 <dt class="t-label">Assigned agent</dt>
@@ -162,7 +162,7 @@
                         </div>
                         <div class="kv-row">
                             <span class="t-meta">Deadline</span>
-                            <span class="t-value t-num" th:text="${#temporals.format(complaint.slaDeadline, 'dd MMM, HH:mm')}">16 Sep, 19:38</span>
+                            <span class="t-value t-num" th:text="${#temporals.format(@slaDisplayService.currentDeadline(complaint), 'dd MMM, HH:mm')}">16 Sep, 19:38</span>
                         </div>
                     </div>
                 </section>

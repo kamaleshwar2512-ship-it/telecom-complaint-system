@@ -23,9 +23,17 @@ import java.time.LocalDateTime;
 /**
  * A single customer complaint and everything needed to track it against its SLA deadline.
  *
+ * <p>A complaint deliberately does <em>not</em> own its SLA target. It owns only the facts the
+ * target is derived from - {@link #category}, {@link #priority} and {@link #createdAt} - and the
+ * target itself is resolved at read time from whichever SLA rule currently matches that
+ * category/priority pair (see {@code SlaEvaluationService}). Editing an SLA rule therefore changes
+ * the SLA status of every existing complaint it matches, with no per-complaint edit.
+ *
  * <p>{@link #approachingNotified} and {@link #breached} are idempotency flags: the scheduled
- * {@code SlaMonitoringService} sets each of them at most once, so re-running the scheduler never
- * re-escalates or re-flags a complaint that has already been handled.
+ * {@code SlaMonitoringService} sets each of them at most once per condition, so re-running the
+ * scheduler never re-escalates a complaint that has already been handled. They record
+ * <em>"the escalation for this condition has already been performed"</em>, not
+ * <em>"this complaint is breached"</em> - the live status always comes from the current rule.
  */
 @Entity
 @Table(name = "complaints", indexes = {
@@ -63,8 +71,27 @@ public class Complaint {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    /**
+     * Cached copy of the <em>currently applicable</em> deadline, i.e. {@link #createdAt} plus the
+     * resolution target of the SLA rule that matches this complaint right now.
+     *
+     * <p>This is a derived value, not a source of truth: {@code SlaEvaluationService} recomputes it
+     * from the live rule and writes it back whenever the rule changes. It is persisted (and indexed)
+     * only so the {@code ORDER BY sla_deadline} repository queries and the SLA monitor's sweep stay
+     * cheap. Never read it to decide SLA status - go through {@code SlaEvaluationService} or
+     * {@code SlaDisplayService} instead.
+     */
     @Column(name = "sla_deadline", nullable = false)
     private LocalDateTime slaDeadline;
+
+    /**
+     * Historical record of the deadline this complaint was raised under, kept for audit: it is set
+     * once, at creation, and never recalculated when an SLA rule changes. Nullable because
+     * complaints created before this column existed are backfilled lazily, on the first SLA
+     * recalculation that touches them.
+     */
+    @Column(name = "original_sla_deadline")
+    private LocalDateTime originalSlaDeadline;
 
     @Column(name = "resolved_at")
     private LocalDateTime resolvedAt;
@@ -90,5 +117,6 @@ public class Complaint {
         this.status = ComplaintStatus.OPEN;
         this.createdAt = createdAt;
         this.slaDeadline = slaDeadline;
+        this.originalSlaDeadline = slaDeadline;
     }
 }
