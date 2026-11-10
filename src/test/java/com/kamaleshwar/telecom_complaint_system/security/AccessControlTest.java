@@ -11,6 +11,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -21,6 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
+@Transactional // roll back the test user so it cannot clash with other test classes sharing the H2 database
 class AccessControlTest {
 
     @Autowired
@@ -29,7 +31,7 @@ class AccessControlTest {
     @Autowired
     private UserRepository userRepository;
 
-    private static final String CUSTOMER_EMAIL = "customer@test.com";
+    private static final String CUSTOMER_EMAIL = "access-control-customer@test.com";
 
     /**
      * CustomerController looks the logged-in user up in the database by email. @WithMockUser only
